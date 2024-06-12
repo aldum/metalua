@@ -6,14 +6,16 @@ local M = require("metalua.compiler.ast_to_src")
 
 local mlc = require("metalua.compiler").new()
 
-function scandir(directory)
+local function scandir(directory)
    local i, t, popen = 0, {}, io.popen
    local pfile = popen('ls -a "' .. directory .. '"')
+   if pfile then
    for filename in pfile:lines() do
-      i = i + 1
-      t[i] = filename
+         i = i + 1
+         t[i] = filename
+      end
+      pfile:close()
    end
-   pfile:close()
    return t
 end
 
