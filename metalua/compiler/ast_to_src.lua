@@ -211,7 +211,8 @@ function M:node(node)
       else -- No appropriate method, fall back to splice dumping.
          -- This cannot happen in a plain Lua AST.
          self:acc(" -{ ")
-         self:acc(pp.tostring(node, { metalua_tag = 1, hide_hash = 1 }), 80)
+         self:acc(pp.tostring(node,
+            { metalua_tag = 1, hide_hash = 1, line_max = 80 }))
          self:acc(" }")
       end
    end
