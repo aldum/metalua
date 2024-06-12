@@ -684,8 +684,12 @@ function M.list(p)
          repeat
             local item = self.primary(lx)
             table.insert(x, item) -- read one element
-         until  -- There's a separator list specified, and next token isn't in it.            -- Otherwise, consume it with [lx:next()]self.separators and not (peek_is_in(self.separators) and lx:next())
-            -- Terminator token ahead
+         until
+         -- There's a separator list specified, and next token isn't in it.
+         -- Otherwise, consume it with [lx:next()]
+            self.separators and
+            not (peek_is_in(self.separators)
+               and lx:next())
             or peek_is_in(self.terminators)
             -- Last reason: end of file reached
             or lx:peek().tag == "Eof"
