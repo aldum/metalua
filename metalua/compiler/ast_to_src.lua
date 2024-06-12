@@ -188,7 +188,6 @@ local op_symbol = {
    len = "# ",
    unm = "-",
 }
-require("moon.all")
 -- Accumulate the source representation of AST `node' in
 -- the synthetizer. Most of the work is done by delegating to
 -- the method having the name of the AST tag.

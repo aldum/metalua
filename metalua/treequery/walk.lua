@@ -100,7 +100,6 @@ M.tags.expr = table_transpose({
    "String",
    "Id",
 })
-require("moon.all")
 --------------------------------------------------------------------------------
 -- These [M.traverse.xxx()] functions are in charge of actually going through
 -- ASTs. At each node, they make sure to call the appropriate walker.
