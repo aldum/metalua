@@ -26,8 +26,8 @@ require("stringutils")
 -- Instanciate a new AST->source synthetizer
 function M.new()
    local self = {
-      _acc = {}, -- Accumulates pieces of source as strings
-      current_indent = 0, -- Current level of line indentation
+      _acc = {},           -- Accumulates pieces of source as strings
+      current_indent = 0,  -- Current level of line indentation
       indent_step = "   ", -- Indentation symbol, normally spaces or '\t'
       comment_ids = {},    -- Comments index accumulator
    }
@@ -148,12 +148,12 @@ end
 -- This is not directly used, it's used to generate op_prec below.
 --------------------------------------------------------------------------------
 local op_preprec = {
-   { "or", "and" },
-   { "lt", "le", "eq", "ne" },
+   { "or",    "and" },
+   { "lt",    "le",    "eq",  "ne" },
    { "concat" },
-   { "add", "sub" },
-   { "mul", "div", "mod" },
-   { "unm", "unary", "not", "len" }, ---TODO:
+   { "add",   "sub" },
+   { "mul",   "div",   "mod" },
+   { "unm",   "unary", "not", "len" }, ---TODO:
    { "pow" },
    { "index" },
 }
@@ -236,6 +236,7 @@ function M:extract_comments(node)
 
    return comments
 end
+
 -- Accumulate the source representation of AST `node' in
 -- the synthetizer. Most of the work is done by delegating to
 -- the method having the name of the AST tag.
@@ -367,11 +368,11 @@ function M:Set(node)
    local rhs = node[2]
    -- ``function foo:bar(...) ... end'' --
    if
-      lhs[1].tag == "Index"
-      and rhs[1].tag == "Function"
-      and rhs[1][1][1] == "self"
-      and is_idx_stack(lhs)
-      and is_ident(lhs[1][2][1])
+       lhs[1].tag == "Index"
+       and rhs[1].tag == "Function"
+       and rhs[1][1][1] == "self"
+       and is_idx_stack(lhs)
+       and is_ident(lhs[1][2][1])
    then
       local method = lhs[1][2][1]
       local params = rhs[1][1]
