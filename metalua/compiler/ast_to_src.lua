@@ -617,17 +617,17 @@ M.False = "false"
 M.True = "true"
 M.Dots = "..."
 
-function M:Number(node, n)
+function M:Number(_, n)
    self:acc(tostring(n))
 end
 
-function M:String(node, str)
+function M:String(_, str)
    -- format "%q" prints '\n' in an umpractical way IMO,
    -- so this is fixed with the :gsub( ) call.
    self:acc(string.format("%q", str):gsub("\\\n", "\\n"))
 end
 
-function M:Function(node, params, body, annots)
+function M:Function(_, params, body, annots)
    self:acc("function(")
    if annots then
       local n = #params
@@ -739,7 +739,7 @@ function M:Paren(_, content)
    self:acc(")")
 end
 
-function M:Index(node, table, key)
+function M:Index(_, table, key)
    local paren_table
    if table.tag == "Op" and op_prec[table[1][1]] < op_prec.index then
       paren_table = true
