@@ -216,12 +216,15 @@ function M:extract_comments(node)
          local off            = cla.offset - cfi.offset
          local d              = off - len
          local li             = {
+         local n_l             = #(string.lines(comment_text))
+         local l_d             = cla.line - cfi.line
+         local newline         = (n_l ~= 0 and n_l == l_d)
             first = cfirst,
             last = clast,
             text = comment_text,
-            multiline = (d == 5),
+            multiline = (d > 4),
             position = pos,
-            add_newline = false,
+            prepend_newline = newline
          }
          self.comment_ids[id] = true
          table.insert(comments, li)
@@ -257,7 +260,6 @@ function M:node(node)
    --- @param pos 'first'|'last'
    local function show_comments(pos)
       for _, co in pairs(comments) do
-         local ml = false
          if co.position == pos then
             if co.position == 'last' then self:nl(true) end
             local lines = string.lines(co.text)
@@ -265,6 +267,7 @@ function M:node(node)
             local le = co.last.l
             if co.multiline then
                self:acc('--[[')
+               if co.prepend_newline then self:nl(true) end
                for i, l in ipairs(lines) do
                   self:acc(l)
                   if i ~= #lines then self:nl(true) end
@@ -277,7 +280,6 @@ function M:node(node)
                   self:acc(ct)
                else
                   --- multiple comments
-                  ml = true
                   for i, l in ipairs(lines) do
                      local ct = '--' .. l
                      self:acc(ct)
@@ -285,7 +287,7 @@ function M:node(node)
                   end
                end
             end
-            if co.position == 'first' and not ml then self:nl(true) end
+            if co.position == 'first' then self:nl(true) end
          end
       end
    end
