@@ -622,9 +622,18 @@ function M:Number(_, n)
 end
 
 function M:String(_, str)
-   -- format "%q" prints '\n' in an umpractical way IMO,
-   -- so this is fixed with the :gsub( ) call.
-   self:acc(string.format("%q", str):gsub("\\\n", "\\n"))
+   local multiline = str:match('\n')
+   local rendered = ''
+   --- format "%q" prints '\n' in an umpractical way IMO,
+   --- so this is fixed with the :gsub( ) call.
+   if multiline then
+      local ls = string.lines(str)
+      rendered = rendered ..
+          string.format("%q", table.concat(ls, "\n")):gsub("\\\n", [[\n]])
+   else
+      rendered = string.format("%q", str):gsub("\\\n", "\n")
+   end
+   self:acc(rendered)
 end
 
 function M:Function(_, params, body, annots)
