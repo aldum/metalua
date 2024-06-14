@@ -26,10 +26,14 @@ require("stringutils")
 -- Instanciate a new AST->source synthetizer
 function M.new()
    local self = {
-      _acc = {},           -- Accumulates pieces of source as strings
-      current_indent = 0,  -- Current level of line indentation
-      indent_step = "   ", -- Indentation symbol, normally spaces or '\t'
-      comment_ids = {},    -- Comments index accumulator
+      -- Accumulates pieces of source as strings
+      _acc = {},
+      -- Current level of line indentation
+      current_indent = 0,
+      -- Indentation symbol, normally spaces or '\t'
+      indent_step = "  ",
+      -- Comments index accumulator
+      comment_ids = {},
    }
    return setmetatable(self, M)
 end
