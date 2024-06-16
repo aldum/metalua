@@ -73,7 +73,59 @@ string.usub = function(s, i, j)
   end
 end
 
--- https://stackoverflow.com/a/51893646
+string.split_at = function(s, i)
+  local str = s or ''
+  local pre, post = '', ''
+  local ulen = string.ulen(str)
+  if ulen ~= #str then -- branch off for UTF-8
+    pre = string.usub(str, 1, i - 1)
+    post = string.usub(str, i)
+  else
+    pre = string.sub(str, 1, i - 1)
+    post = string.sub(str, i, #str)
+  end
+  return pre, post
+end
+
+string.wrap_at = function(s, i)
+  if
+      not s or type(s) ~= 'string' or s == '' or
+      not i or type(i) ~= 'number' or i < 1 then
+    return { '' }
+  end
+  local len = string.ulen(s) or 0
+  local mod = math.floor(i)
+  local n = math.floor(len / mod)
+  local res = {}
+  local chunk = ''
+  local rem = s
+  for _ = 1, n do
+    chunk, rem = string.split_at(rem, mod + 1)
+    table.insert(res, chunk)
+  end
+  if string.is_non_empty_string(rem, true) then
+    table.insert(res, rem)
+  end
+
+  return res
+end
+--- @param t string[]
+--- @param i integer
+string.wrap_array = function(t, i)
+  local res = {}
+  for _, s in ipairs(t) do
+    local ws = string.wrap_at(s, i)
+    for _, l in ipairs(ws) do
+      table.insert(res, l)
+    end
+  end
+
+  return res
+end
+
+--- https://stackoverflow.com/a/51893646
+--- @param str string
+--- @param delimiter string
 string.split = function(str, delimiter)
   local del = delimiter or ' '
   if str and type(str) == 'string' and string.is_non_empty_string(str, true) then
