@@ -278,27 +278,47 @@ function M:node(node)
             local ls = co.first.l
             local le = co.last.l
             if co.multiline then
+               local wrapped = string.wrap_array(lines, self.wrap - 4)
                self:acc('--[[')
                if co.prepend_newline then self:nl(true) end
-               for i, l in ipairs(lines) do
+               for i, l in ipairs(wrapped) do
                   self:acc(l)
-                  if i ~= #lines then self:nl(true) end
+                  if i ~= #wrapped then self:nl(true) end
                end
                self:acc(']]')
             else
+               local wrapped = string.wrap_array(lines, self.wrap - 3)
                if ls == le then
                   --- single line comment
-                  local ct = '--' .. co.text
-                  self:acc(ct)
+                  if co.text == '' then
+                     self:acc('--')
+                  else
+                     for i, l in ipairs(wrapped) do
+                        local pre = '--'
+                        if i == 1 and string.sub(l, 1, 1) == ' '
+                        then
+                        else
+                           pre = pre .. ' '
+                        end
+                        self:acc(pre .. l)
+                        if i ~= #wrapped then self:nl(true) end
+                     end
+                  end
                else
-                  --- multiple comments
-                  for i, l in ipairs(lines) do
-                     local ct = '--' .. l
-                     self:acc(ct)
-                     if i ~= #lines then self:nl(true) end
+                  for i, l in ipairs(wrapped) do
+                     local first = string.sub(l, 1, 1)
+                     local pre = '--'
+                     if first == ' ' or first == '-'
+                     then
+                     else
+                        pre = pre .. ' '
+                     end
+                     self:acc(pre .. l)
+                     if i ~= #wrapped then self:nl(true) end
                   end
                end
             end
+
             if co.position == 'first' then self:nl(true) end
          end
       end
