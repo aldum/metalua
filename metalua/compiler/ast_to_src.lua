@@ -472,7 +472,7 @@ function M:While(_, cond, body)
    self:acc("end")
 end
 
-function M:Repeat(node, body, cond)
+function M:Repeat(_, body, cond)
    self:acc("repeat")
    self:nlindent()
    self:list(body, self.nl)
@@ -561,7 +561,7 @@ function M:Local(node, lhs, rhs, annots)
    end
 end
 
-function M:Localrec(node, lhs, rhs)
+function M:Localrec(_, lhs, rhs)
    -- ``local function name() ... end'' --
    self:acc("local function ")
    self:acc(lhs[1][1])
