@@ -25,6 +25,7 @@ dependencies = {
     "luafilesystem >= 1.6.2",  -- Cached compilation based on file timestamps
     "readline >= 1.3",         -- Better REPL experience
     "metalua-parser == 0.7.2", -- AST production
+    "luautf8 >= 0.1.5",        -- UTF8 support
 }
 
 build = {
