@@ -17,6 +17,12 @@
 --
 -------------------------------------------------------------------------------
 
+--- @class M
+--- @field _acc table
+--- @field current_indent integer
+--- @field indent_step string
+--- @field comment_ids table
+--- @field wrap integer
 local M = {}
 M.__index = M
 
@@ -24,7 +30,7 @@ local pp = require("metalua.pprint")
 require("stringutils")
 
 -- Instanciate a new AST->source synthetizer
-function M.new(seen_comments)
+function M.new(seen_comments, w)
    local self = {
       -- Accumulates pieces of source as strings
       _acc = {},
@@ -34,6 +40,8 @@ function M.new(seen_comments)
       indent_step = "  ",
       -- Comments index accumulator
       comment_ids = seen_comments or {},
+      -- wrap length
+      wrap = w or 80
    }
    return setmetatable(self, M)
 end
