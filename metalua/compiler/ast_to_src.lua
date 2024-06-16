@@ -216,15 +216,20 @@ function M:extract_comments(node)
    local function add_comment(c, pos)
       local idf = c.lineinfo.first.id
       local idl = c.lineinfo.last.id
+      --- the same comment might get picked up both as preceding the next
+      --- expression and succeeding the previous one
       local present = self.comment_ids[idf] or self.comment_ids[idl]
       if not present then
          local comment_text    = c[1]
+         --- [[]] comments get parsed into two lexemes (the second is empty)
          local has_next        = c[2]
-         local n_l             = #(string.lines(comment_text))
          local cfi             = c.lineinfo.first
          local cla             = c.lineinfo.last
          local cfirst          = { l = cfi.line, c = cfi.column }
          local clast           = { l = cla.line, c = cla.column }
+         --- if the number of lines in the text is less than the apparent
+         --- positions, add the newline back
+         local n_l             = #(string.lines(comment_text))
          local l_d             = cla.line - cfi.line
          local newline         = (n_l ~= 0 and n_l == l_d)
          local li              = {
@@ -271,11 +276,15 @@ function M:node(node)
    local comments = self:extract_comments(node)
    --- @param pos 'first'|'last'
    local function show_comments(pos)
+      --- to avoid double dipping, only show corresponding comments
       for _, co in pairs(comments) do
          if co.position == pos then
+            --- comes _after_ a previous expression
             if co.position == 'last' then self:nl(true) end
+            --- preserve existing newlines
             local lines = string.lines(co.text)
             if co.multiline then
+               --- multliine comment (--[[]])
                local wrapped = string.wrap_array(lines, self.wrap - 4)
                self:acc('--[[')
                if co.prepend_newline then self:nl(true) end
@@ -289,14 +298,17 @@ function M:node(node)
                local le = co.last.l
                local wrapped = string.wrap_array(lines, self.wrap - 3)
                if ls == le then
-                  --- single line comment
+                  --- (originally) single line comment
                   if co.text == '' then
                      self:acc('--')
                   else
                      for i, l in ipairs(wrapped) do
                         local first = string.sub(l, 1, 1)
                         local pre = '--'
+                        --- add a space if not present already
+                        --- do not break up '---'-style comments
                         if i == 1 and first == ' ' or first == '-'
+                        --- in this case, only for the first line
                         then
                         else
                            pre = pre .. ' '
@@ -306,9 +318,12 @@ function M:node(node)
                      end
                   end
                else
+                  --- multiple single line comments
                   for i, l in ipairs(wrapped) do
                      local first = string.sub(l, 1, 1)
                      local pre = '--'
+                     --- add a space if not present already
+                     --- do not break up '---'-style comments
                      if first == ' ' or first == '-'
                      then
                      else
@@ -319,7 +334,7 @@ function M:node(node)
                   end
                end
             end
-
+            --- comes _before_ the next expression
             if co.position == 'first' then self:nl(true) end
          end
       end
