@@ -29,7 +29,7 @@ M.__index = M
 local pp = require("metalua.pprint")
 require("stringutils")
 
--- Instanciate a new AST->source synthetizer
+-- Instantiate a new AST->source synthetizer
 function M.new(seen_comments, w)
    local self = {
       -- Accumulates pieces of source as strings
@@ -49,7 +49,7 @@ end
 --------------------------------------------------------------------------------
 -- Run a synthetizer on the `ast' arg and return the source as a string.
 -- Can also be used as a static method `M.run (ast)'; in this case,
--- a temporary Metizer is instanciated on the fly.
+-- a temporary Metizer is instantiated on the fly.
 --------------------------------------------------------------------------------
 function M:run(ast)
    if not ast then
@@ -746,7 +746,7 @@ function M:Table(node)
    end
 end
 
--- TODO: understand associatitivity
+-- TODO: understand associativity
 function M:Op(node, op, a, b)
    if op == "not" and (node[2][1][1] == "eq") then ---TODO:???
       op, a, b = "ne", node[2][1][2], node[2][1][3]
