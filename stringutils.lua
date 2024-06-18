@@ -191,7 +191,7 @@ string.split_array = function(str_arr, char)
 end
 
 --- @param s string|string[]
---- @return string[]?
+--- @return string[]
 string.lines = function(s)
   if type(s) == 'string' then
     return string.split(s, '\n')
@@ -199,6 +199,7 @@ string.lines = function(s)
   if type(s) == 'table' then
     return string.split_array(s, '\n')
   end
+  return {}
 end
 
 --- @param strs string|string[]
