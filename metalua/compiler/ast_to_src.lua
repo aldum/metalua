@@ -287,14 +287,22 @@ function M:node(node)
             local lines = string.lines(co.text)
             if co.multiline then
                --- multliine comment (--[[]])
-               local wrapped = string.wrap_array(lines, self.wrap - 4)
-               self:acc('--[[')
-               if co.prepend_newline then self:nl(true) end
+               if co.prepend_newline then
+                  table.insert(lines, 1, '')
+               end
+               local l1 = lines[1] or ''
+               if #lines == 1 then
+                  lines[1] = '--[[' .. l1 .. ']]'
+               else
+                  local llast = lines[#lines] or ''
+                  lines[1] = '--[[' .. l1
+                  lines[#lines] = llast .. ']]'
+               end
+               local wrapped = string.wrap_array(lines, self.wrap)
                for i, l in ipairs(wrapped) do
                   self:acc(l)
                   if i ~= #wrapped then self:nl(true) end
                end
-               self:acc(']]')
             else
                local ls = co.first.l
                local le = co.last.l
@@ -676,7 +684,7 @@ function M:String(_, str)
    if multiline then
       -- local nl_esc = str:gsub("\n", [[\n]])
       --- split the raw text
-      local split = string.lines(str)
+      local split = string.lines(str) or {}
       --- add newline placeholders
       for i, v in ipairs(split) do
          if i ~= #split then
