@@ -21,7 +21,7 @@
 if not pcall(require, 'checks') then function package.preload.checks() function checks() end end end
 
 -- Main file for the metalua executable
-require 'metalua.loader' -- load *.mlue files
+require 'metalua.loader'           -- load *.mlua files
 require 'metalua.compiler.globals' -- metalua-aware loadstring, dofile etc.
 
 local alt_getopt = require 'alt_getopt'

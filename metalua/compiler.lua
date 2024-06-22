@@ -84,7 +84,7 @@ local CONV = { } -- conversion metatable __index
 
 function CONV :srcfile_to_src(x, name)
 	checks('metalua.compiler', 'string', '?string')
-	name = name or '@'..x
+	name = (name or '@') .. x
 	local f, msg = io.open (x, 'rb')
 	if not f then error(msg) end
 	local r, msg = f :read '*a'

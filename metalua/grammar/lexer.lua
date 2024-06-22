@@ -23,12 +23,12 @@ local M = {}
 ---@field sym table<string,table<string>>
 ---@field src string
 ---@field posfact position_factory
----@field newstream fun(lx: lexer, src_or_stream: string | table, src_name: string): lexer?
+---@field newstream fun(lx: lexer, src_or_stream: string | table, src_name: string?): lexer?
 ---@field is_keyword fun(lx: lexer, tk: token, ...: string): string | false
----@field extract_short_comment fun(lx: lexer): string, number | nil
----@field extract_long_comment fun(lx: lexer): string, number | nil
+---@field extract_short_comment fun(lx: lexer): string?, number?, number?
+---@field extract_long_comment fun(lx: lexer): string?, number?, number?
 ---@field extract_short_string fun(lx: lexer): string?, string?
----@field extract_word fun(lx: lexer): string, number | nil
+---@field extract_word fun(lx: lexer): string?, number?
 ---@field extract_number fun(lx: lexer): string?, number?
 ---@field extract_long_string fun(lx: lexer): string?, string? | nil
 ---@field extract_symbol fun(lx: lexer): string, string | nil
