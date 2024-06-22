@@ -835,15 +835,15 @@ function M:Index(_, table, key)
    self:node(table)
    self:acc(paren_table and ")")
 
-   -- ``table [key]''
-   if key.tag == "True" or key.tag == "False" or (not is_ident(key[1])) then
+   if key.tag == 'String' and is_ident(key[1]) then
+      -- ``table [key]''
+      self:acc(".")
+      self:acc(key[1])
+   else
+      -- ``table.key''
       self:acc("[")
       self:node(key)
       self:acc("]")
-   else
-      -- ``table.key''
-      self:acc(".")
-      self:acc(key[1])
    end
 end
 
