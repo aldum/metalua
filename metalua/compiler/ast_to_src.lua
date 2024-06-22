@@ -212,7 +212,7 @@ local op_symbol = {
   ["and"] = " and ",
   ["or"] = " or ",
   ["not"] = "not ",
-  len = "# ",
+  len = "#",
   unm = "-",
 }
 
