@@ -142,10 +142,12 @@ local function is_ident(id)
    return string["match"](id, "^[%a_][%w_]*$") and not keywords[id]
 end
 
--- Return true iff ast represents a legal function name for
--- syntax sugar ``function foo.bar.gnat() ... end'':
--- a series of nested string indexes, with an identifier as
--- the innermost node.
+--- Return true iff ast represents a legal function name for
+--- syntax sugar ``function foo.bar.gnat() ... end'':
+--- a series of nested string indexes, with an identifier as
+--- the innermost node.
+--- @param ast table
+--- @return boolean
 local function is_idx_stack(ast)
    local tag = ast.tag
    if tag == "Index" then
@@ -371,13 +373,16 @@ function M:node(node)
 end
 
 --------------------------------------------------------------------------------
--- Convert every node in the AST list `list' passed as 1st arg.
--- `sep' is an optional separator to be accumulated between each list element,
--- it can be a string or a synth method.
--- `start' is an optional number (default == 1), indicating which is the
--- first element of list to be converted, so that we can skip the begining
--- of a list.
+--- Convert every node in the AST list `list' passed as 1st arg.
+--- `sep' is an optional separator to be accumulated between each list element,
+--- it can be a string or a synth method.
+--- `start' is an optional number (default == 1), indicating which is the
+--- first element of list to be converted, so that we can skip the begining
+--- of a list.
 --------------------------------------------------------------------------------
+--- @param list table
+--- @param sep string|function
+--- @param start integer?
 function M:list(list, sep, start)
    for i = start or 1, #list do
       self:node(list[i])
