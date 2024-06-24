@@ -233,6 +233,7 @@ end
 
 function M:Set (node)
    match node with
+   -- block 1
    | `Set{ { `Index{ lhs, `String{ method } } },
            { `Function{ { `Id "self", ... } == params, body } } }
          if is_idx_stack (lhs) and is_ident (method) ->
@@ -249,6 +250,7 @@ function M:Set (node)
       self:nldedent ()
       self:acc      "end"
 
+   -- block 2
    | `Set{ { lhs }, { `Function{ params, body } } } if is_idx_stack (lhs) ->
       -- ``function foo(...) ... end'' --
       self:acc      "function "
@@ -261,6 +263,7 @@ function M:Set (node)
       self:nldedent ()
       self:acc      "end"
 
+   -- block 3
    | `Set{ { `Id{ lhs1name } == lhs1, ... } == lhs, rhs }
          if not is_ident (lhs1name) ->
       -- ``foo, ... = ...'' when foo is *not* a valid identifier.
@@ -277,11 +280,13 @@ function M:Set (node)
       self:acc      " = "
       self:list     (rhs, ", ")
 
+   -- block 4
    | `Set{ lhs, rhs } ->
       -- ``... = ...'', no syntax sugar --
       self:list  (lhs, ", ")
       self:acc   " = "
       self:list  (rhs, ", ")
+   -- block 5
    | `Set{ lhs, rhs, annot } ->
       -- ``... = ...'', no syntax sugar, annotation --
       local n = #lhs
