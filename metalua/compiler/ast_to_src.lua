@@ -797,12 +797,12 @@ function M:Table(node)
       for i, elem in ipairs(node) do
          if elem.tag == "Pair" then
             if elem[1].tag == "String" and is_ident(elem[1][1]) then
-               -- `Pair{ `String{ key }, value }
+               --- `Pair{ `String{ key }, value }
                self:acc(elem[1][1])
                self:acc(" = ")
                self:node(elem[2])
             else
-               -- `Pair{ key, value }
+               --- `Pair{ key, value }
                self:acc("[")
                self:node(elem[1])
                self:acc("] = ")
@@ -897,11 +897,11 @@ function M:Index(_, table, key)
    self:acc(paren_table and ")")
 
    if key.tag == 'String' and is_ident(key[1]) then
-      -- ``table [key]''
+      --- ``table [key]''
       self:acc(".")
       self:acc(key[1])
    else
-      -- ``table.key''
+      --- ``table.key''
       self:acc("[")
       self:node(key)
       self:acc("]")
@@ -911,8 +911,9 @@ end
 function M:Id(node, name)
    if is_ident(name) then
       self:acc(name)
-   else -- Unprintable identifier, fall back to splice representation.
-      -- This cannot happen in a plain Lua AST.
+   else
+      --- Unprintable identifier, fall back to splice representation.
+      --- This cannot happen in a plain Lua AST.
       self:acc("-{`Id ")
       self:String(node, name)
       self:acc("}")
