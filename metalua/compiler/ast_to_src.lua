@@ -60,6 +60,12 @@ function M:run(ast)
    end
    self._acc = {}
    self:node(ast)
+   return self:render()
+end
+
+--- @return string
+--- @return integer[]
+function M:render()
    return table.concat(self._acc), self.comment_ids
 end
 
