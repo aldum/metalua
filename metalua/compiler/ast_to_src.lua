@@ -547,33 +547,33 @@ function M:Set(node)
       self:nldedent()
       self:acc("end")
       --- metalua extensions
-      -- elseif rhs[1].tag == "Id"
-      --     and not is_ident(lhs[1][2][1])
-      -- then
-      --    --- block 3
-      --    --- `foo, ... = ...` when foo is *not* a valid identifier.
-      --    --- In that case, the spliced 1st variable must get parentheses,
-      --    --- to be distinguished from a statement splice.
-      --    --- This cannot happen in a plain Lua AST.
-      --    self:list(lhs, ", ")
-      --    self:acc(" = ")
-      --    self:list(rhs, ", ")
-      -- elseif node[3] then
-      --    --- block 5
-      --    --- `... = ...`, no syntax sugar, annotation ---
-      --    local annot = node[3]
-      --    local n = #lhs
-      --    for i = 1, n do
-      --       local ell, a = lhs[i], annot[i]
-      --       self:node(ell)
-      --       if a then
-      --          self:acc ' #'
-      --          self:node(a)
-      --       end
-      --       if i ~= n then self:acc ', ' end
-      --    end
-      --    self:acc " = "
-      --    self:list(rhs, ", ")
+      --[[ elseif rhs[1].tag == "Id"
+           and not is_ident(lhs[1][2][1])
+       then
+          --- block 3
+          --- `foo, ... = ...` when foo is *not* a valid identifier.
+          --- In that case, the spliced 1st variable must get parentheses,
+          --- to be distinguished from a statement splice.
+          --- This cannot happen in a plain Lua AST.
+          self:list(lhs, ", ")
+          self:acc(" = ")
+          self:list(rhs, ", ")
+       elseif node[3] then
+          --- block 5
+          --- `... = ...`, no syntax sugar, annotation ---
+          local annot = node[3]
+          local n = #lhs
+          for i = 1, n do
+             local ell, a = lhs[i], annot[i]
+             self:node(ell)
+             if a then
+                self:acc ' #'
+                self:node(a)
+             end
+             if i ~= n then self:acc ', ' end
+          end
+          self:acc " = "
+          self:list(rhs, ", ")--]]
    else
       --- block 4
       --- `... = ...`, no syntax sugar ---
