@@ -66,13 +66,17 @@ end
 --------------------------------------------------------------------------------
 -- Accumulate a piece of source file in the synthetizer.
 --------------------------------------------------------------------------------
+--- @param x string
 function M:acc(x)
    if x then
       local clen = self._line_len
       local l = string.ulen(x)
       local lines = string.lines(x)
       local n_l = #lines
-      if l + clen > self.wrap and n_l < 2 then
+      if l + clen > self.wrap
+          -- if the string has multiple lines, handle it elsewhere
+          and n_l < 2
+      then
          local ind = self.indent_step:rep(self.current_indent + 2)
          self:acc("\n" .. ind)
          self._line_len = #ind
@@ -874,9 +878,9 @@ function M:Op(node, op, a, b)
          right_paren = true
       end
 
-      self:acc(left_paren and "(")
+      self:acc(left_paren and "(" or '')
       self:node(a)
-      self:acc(left_paren and ")")
+      self:acc(left_paren and ")" or '')
 
       if op_cond[op] then
          if type(a[2]) == "table"
@@ -890,9 +894,9 @@ function M:Op(node, op, a, b)
       end
       self:acc(op_symbol[op])
 
-      self:acc(right_paren and "(")
+      self:acc(right_paren and "(" or '')
       self:node(b)
-      self:acc(right_paren and ")")
+      self:acc(right_paren and ")" or '')
    else --- unary operator.
       local paren = false
       if a.tag == "Op" then
@@ -902,9 +906,9 @@ function M:Op(node, op, a, b)
          paren = true
       end
       self:acc(op_symbol[op])
-      self:acc(paren and "(")
+      self:acc(paren and "(" or '')
       self:node(a)
-      self:acc(paren and ")")
+      self:acc(paren and ")" or '')
    end
 end
 
@@ -922,9 +926,9 @@ function M:Index(_, table, key)
       paren_table = false
    end
 
-   self:acc(paren_table and "(")
+   self:acc(paren_table and "(" or "")
    self:node(table)
-   self:acc(paren_table and ")")
+   self:acc(paren_table and ")" or "")
 
    if key.tag == 'String' and is_ident(key[1]) then
       --- ``table [key]''
