@@ -230,3 +230,9 @@ string.join = function(strs, char)
   end
   return res
 end
+
+--- @param strs string|table
+--- @return string
+string.unlines = function(strs)
+  return string.join(strs, '\n')
+end
