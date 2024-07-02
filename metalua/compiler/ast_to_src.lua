@@ -115,14 +115,14 @@ end
 --- @param s string
 --------------------------------------------------------------------------------
 function M:fits(s)
-   if type(s) == 'string' then
-      local clen = self._line_len
-      local l = string.ulen(s)
-      local lines = string.lines(s)
-      local n_l = #lines
-      if n_l == 1 then return l + clen < self.wrap end
-      return true --- TODO
-   end
+  if type(s) == 'string' then
+    local clen = self._line_len
+    local l = string.ulen(s)
+    local lines = string.lines(s)
+    local n_l = #lines
+    if n_l == 1 then return l + clen < self.wrap end
+    return true --- TODO
+  end
 end
 
 --------------------------------------------------------------------------------
@@ -159,7 +159,8 @@ function M:nldedent()
 end
 
 --------------------------------------------------------------------------------
--- Insert a new line indented deeper.
+--- Insert a new line indented differently. Default is one deeper.
+--- @param extra integer?
 --------------------------------------------------------------------------------
 function M:nltempindent(extra)
   local add = extra or 1
@@ -472,16 +473,16 @@ function M:node(node)
 end
 
 --------------------------------------------------------------------------------
---- Convert every node in the AST list `list' passed as 1st arg.
---- `sep' is an optional separator to be accumulated between each list element,
+--- Convert every node in the AST list passed as 1st arg.
+--- @param list table
+--- @param sep string|function
+--- Optional separator to be accumulated between each list element,
 --- it can be a string or a synth method.
---- `start' is an optional number (default == 1), indicating which is the
+--- @param start integer?
+--- Optional number (default == 1), indicating which is the
 --- first element of list to be converted, so that we can skip the begining
 --- of a list.
 --------------------------------------------------------------------------------
---- @param list table
---- @param sep string|function
---- @param start integer?
 function M:list(list, sep, start)
   for i = start or 1, #list do
     self:node(list[i])
@@ -499,28 +500,87 @@ function M:list(list, sep, start)
 end
 
 --------------------------------------------------------------------------------
---
--- Tag methods.
--- ------------
---
--- Specific AST node dumping methods, associated to their node kinds
--- by their name, which is the corresponding AST tag.
--- synth:node() is in charge of delegating a node's treatment to the
--- appropriate tag method.
---
--- Such tag methods are called with the AST node as 1st arg.
--- As a convenience, the n node's children are passed as args #2 ... n+1.
---
--- There are several things that could be refactored into common subroutines
--- here: statement blocks dumping, function dumping...
--- However, given their small size and linear execution
--- (they basically perform series of :acc(), :node(), :list(),
--- :nl(), :nlindent() and :nldedent() calls), it seems more readable
--- to avoid multiplication of such tiny functions.
---
--- To make sense out of these, you need to know metalua's AST syntax, as
--- found in the reference manual or in metalua/doc/ast.txt.
---
+--- M:list() with line wrapping
+--- @param list table
+--- @param sep string|function
+--- @param start integer?
+--- @param split 'single'|'all'?
+--------------------------------------------------------------------------------
+function M:wrapped_list(list, sep, start, split)
+  local function prerender_list()
+    local s = ''
+    for i = start or 1, #list do
+      s = s .. self:prerender(list[i])
+      if list[i + 1] then
+        if not sep then
+          --- TODO
+          -- elseif type(sep) == "function" then
+          --    sep(self)
+        elseif type(sep) == "string" then
+          s = s .. sep
+        else
+          error("Invalid list separator")
+        end
+      end
+    end
+    return s
+  end
+  local split_type = split or 'single'
+  local pre = prerender_list()
+  if self:fits(pre) then
+    self:list(list, sep, start)
+    return
+  end
+  if split_type == 'all' then
+    self:nlindent()
+    local newsep = function(self)
+      if type(sep) == "string" then
+        self:acc(string.normalize(sep))
+      else
+        sep(self)
+      end
+      self:nl()
+    end
+    self:list(list, newsep, start)
+    self:nldedent()
+  else
+    self:list(list, sep, start)
+    --- TODO
+    -- local midpoint = math.ceil(#list / 2)
+    -- local starter = {}
+    -- for i = 1, midpoint do4200827
+    --    table.insert(starter, list[i])
+    -- end
+    -- print('m', midpoint)
+    -- self:wrapped_list(starter, sep)
+    -- self:nltempindent()
+    -- self:wrapped_list(list, sep, midpoint + 1)
+  end
+end
+
+--------------------------------------------------------------------------------
+---
+--- Tag methods.
+--- ------------
+---
+--- Specific AST node dumping methods, associated to their node kinds
+--- by their name, which is the corresponding AST tag.
+--- synth:node() is in charge of delegating a node's treatment to the
+--- appropriate tag method.
+---
+--- Such tag methods are called with the AST node as 1st arg.
+--- As a convenience, the n node's children are passed as args #2 ... n+1.
+---
+--- There are several things that could be refactored into common subroutines
+--- here: statement blocks dumping, function dumping...
+--- However, given their small size and linear execution
+--- (they basically perform series of :acc(), :node(), :list(),
+--- :nl*() calls), it seems more readable
+--- to avoid multiplication of such tiny functions.
+---
+--- To make sense out of these, you need to know metalua's AST syntax, as
+--- found in the reference manual or in metalua/doc/ast.txt.
+---
 --------------------------------------------------------------------------------
 
 function M:Do(node)
