@@ -210,7 +210,16 @@ string.join = function(strs, char)
   if type(strs) == 'table' then
     local j = char or ' '
     for i, word in ipairs(strs) do
-      res = res .. word
+      local w = (function()
+        if type(word) == "table" then
+          return string.join(word, char)
+        elseif type(word) == "string" then
+          return word
+        else
+          return ''
+        end
+      end)()
+      res = res .. w
       if i ~= #strs then
         res = res .. j
       end
