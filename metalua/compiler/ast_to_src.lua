@@ -849,7 +849,7 @@ end
 
 function M:Return(node)
    self:acc("return ")
-   self:list(node, ", ")
+   self:wrapped_list(node, ", ")
 end
 
 M.Break = "break"
