@@ -662,7 +662,7 @@ function M:Set(node)
       local params = rhs[1][1]
       local body = rhs[1][2]
       self:acc("function ")
-      self:node(lhs)
+      self:node(lhs[1])
       self:acc("(")
       self:wrapped_list(params, ", ", nil, 'all')
       self:acc(")")
