@@ -617,7 +617,7 @@ function M:Set(node)
     self:acc(":")
     self:acc(method)
     self:acc("(")
-    self:list(params, ", ", 2)
+    self:wrapped_list(params, ", ", 2, 'all')
     self:acc(")")
     self:nlindent()
     self:list(body, self.nl)
@@ -777,11 +777,11 @@ function M:Local(node, lhs, rhs, annots)
 end
 
 function M:Localrec(_, lhs, rhs)
-  -- ``local function name() ... end'' --
+  --- ``local function name() ... end'' --
   self:acc("local function ")
   self:acc(lhs[1][1])
   self:acc("(")
-  self:list(rhs[1][1], ", ")
+  self:wrapped_list(rhs[1][1], ", ", nil, 'all')
   self:acc(")")
   self:nlindent()
   self:list(rhs[1][2], self.nl)
@@ -885,13 +885,14 @@ function M:Function(_, params, body, annots)
       end
     end
   else
-    self:list(params, ", ")
+    self:wrapped_list(params, ", ", nil, 'all')
   end
   self:acc(")")
   self:nlindent()
   self:list(body, self.nl)
   self:nldedent()
   self:acc("end")
+  self:nl(true)
 end
 
 function M:Table(node)
