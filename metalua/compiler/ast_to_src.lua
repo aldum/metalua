@@ -170,8 +170,8 @@ function M:nldedent()
 end
 
 --------------------------------------------------------------------------------
---- Insert a new line indented deeper.
---- @param extra integer
+--- Insert a new line indented differently. Default is one deeper.
+--- @param extra integer?
 --------------------------------------------------------------------------------
 function M:nltempindent(extra)
    local add = extra or 1
@@ -498,15 +498,15 @@ function M:node(node)
 end
 
 --------------------------------------------------------------------------------
---- Convert every node in the AST list `list' passed as 1st arg.
---- `sep' is an optional separator to be accumulated between each list element,
---- it can be a string or a synth method.
---- `start' is an optional number (default == 1), indicating which is the
---- first element of list to be converted, so that we can skip the begining
---- of a list.
+--- Convert every node in the AST list passed as 1st arg.
 --- @param list table
 --- @param sep string|function
+--- Optional separator to be accumulated between each list element,
+--- it can be a string or a synth method.
 --- @param start integer?
+--- Optional number (default == 1), indicating which is the
+--- first element of list to be converted, so that we can skip the begining
+--- of a list.
 --------------------------------------------------------------------------------
 function M:list(list, sep, start)
    for i = start or 1, #list do
@@ -521,6 +521,65 @@ function M:list(list, sep, start)
             error("Invalid list separator")
          end
       end
+   end
+end
+
+--------------------------------------------------------------------------------
+--- M:list() with line wrapping
+--- @param list table
+--- @param sep string|function
+--- @param start integer?
+--- @param split 'single'|'all'?
+--------------------------------------------------------------------------------
+function M:wrapped_list(list, sep, start, split)
+   local function prerender_list()
+      local s = ''
+      for i = start or 1, #list do
+         s = s .. self:prerender(list[i])
+         if list[i + 1] then
+            if not sep then
+               --- TODO
+               -- elseif type(sep) == "function" then
+               --    sep(self)
+            elseif type(sep) == "string" then
+               s = s .. sep
+            else
+               error("Invalid list separator")
+            end
+         end
+      end
+      return s
+   end
+   local split_type = split or 'single'
+   local pre = prerender_list()
+   if self:fits(pre) then
+      self:list(list, sep, start)
+      return
+   end
+   if split_type == 'all' then
+      self:nlindent()
+      local newsep = function(self)
+         if type(sep) == "string" then
+            self:acc(string.normalize(sep))
+         else
+            sep(self)
+         end
+         self:nl()
+      end
+      self:list(list, newsep, start)
+      self:nldedent()
+   else
+      self:list(list, sep, start)
+      --- TODO
+      -- local midpoint = math.ceil(#list / 2)
+      -- local starter = {}
+      -- for i = 1, midpoint do
+      --    table.insert(starter, list[i])
+      -- end
+      -- print('m', midpoint)
+      -- self:wrapped_list(starter, sep)
+      -- self:nltempindent()
+      -- self:wrapped_list(list, sep, midpoint + 1)
    end
 end
 
