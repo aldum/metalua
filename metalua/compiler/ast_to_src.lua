@@ -825,7 +825,7 @@ end
 function M:Call(node, f)
    self:node(f)
    self:acc("(")
-   self:list(node, ", ", 2) -- skip `f'.
+   self:wrapped_list(node, ", ", 2, 'all') --- skip `f'.
    self:acc(")")
 end
 
@@ -842,7 +842,7 @@ function M:Invoke(node, f, method)
    self:acc(method[1])
    self:acc("(")
    -- self:acc(parens and "(" or " ")
-   self:list(node, ", ", 3) -- Skip args #1 and #2, object and method name.
+   self:wrapped_list(node, ", ", 3, 'all') -- Skip args #1 and #2, object and method name.
    -- self:acc(parens and ")")
    self:acc(")")
 end
