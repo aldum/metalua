@@ -658,7 +658,7 @@ function M:Set(node)
       self:acc("function ")
       self:node(lhs)
       self:acc("(")
-      self:list(params, ", ")
+      self:wrapped_list(params, ", ", nil, 'all')
       self:acc(")")
       self:nlindent()
       self:list(body, self.nl)
@@ -695,9 +695,9 @@ function M:Set(node)
    else
       --- block 4
       --- `... = ...`, no syntax sugar ---
-      self:list(lhs, ", ")
+      self:wrapped_list(lhs, ", ")
       self:acc(" = ")
-      self:list(rhs, ", ")
+      self:wrapped_list(rhs, ", ")
    end
 end
 
@@ -789,13 +789,14 @@ function M:Local(node, lhs, rhs, annots)
             end
          end
       else
-         self:list(lhs, ", ")
+         self:wrapped_list(lhs, ", ")
       end
       if rhs[1] then
          self:acc(" = ")
-         self:list(rhs, ", ")
+         self:wrapped_list(rhs, ", ")
       end
-   else -- Can't create a local statement with 0 variables in plain Lua
+   else
+      --- Can't create a local statement with 0 variables in plain Lua
       self:acc(pp.tostring(node, "nohash"))
    end
 end
