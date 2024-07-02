@@ -731,8 +731,15 @@ function M:If(node)
       -- for each ``if/then'' and ``elseif/then'' pair --
       local cond, body = node[i], node[i + 1]
       self:acc(i == 1 and "if " or "elseif ")
+      local lc = self._lines
       self:node(cond)
-      self:acc(" then")
+      local ml = self._lines > lc
+      if ml then
+         self:nl()
+         self:acc("then")
+      else
+         self:acc(" then")
+      end
       self:nlindent()
       self:list(body, self.nl)
       self:nldedent()
