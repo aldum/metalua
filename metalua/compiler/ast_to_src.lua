@@ -594,9 +594,8 @@ end
 function M:Set(node)
   local lhs = node[1]
   local rhs = node[2]
-  -- ``function foo:bar(...) ... end'' --
   if
-  --g LHS = { `Index{ lhs, `String{ method } } },
+  -- LHS = { `Index{ lhs, `String{ method } } },
   --       { `Index{ lhs[1][1], `String{ lhs[1][2][1] } } },
   -- RHS = { `Function{ { `Id "self", ... } == params, body } } }
   --       { `Function{ { `Id "rhs[1][1][1][1]", ... } == params, body } } }
@@ -606,6 +605,8 @@ function M:Set(node)
       and is_idx_stack(lhs[1][1])
       and is_ident(lhs[1][2][1])
   then
+    --- block 1
+    --- `function foo:bar(...) ... end` ---
     local method = lhs[1][2][1]
     local params = rhs[1][1]
     local body = rhs[1][2]
@@ -622,63 +623,56 @@ function M:Set(node)
     self:list(body, self.nl)
     self:nldedent()
     self:acc("end")
-  elseif rhs[1].tag == "Function" and is_idx_stack(lhs) then
-    print("here?")
-    print(is_idx_stack(lhs))
-    -- | `Set{ { lhs }, { `Function{ params, body } } } if is_idx_stack (lhs) ->
-    --    -- ``function foo(...) ... end'' --
+  elseif rhs[1].tag == "Function"
+      and is_idx_stack(lhs[1])
+  then
+    --- block 2
+    --- `function foo(...) ... end` ---
     local params = rhs[1][1]
     local body = rhs[1][2]
     self:acc("function ")
     self:node(lhs)
     self:acc("(")
-    self:list(params, ", ")
+    self:wrapped_list(params, ", ", nil, 'all')
     self:acc(")")
     self:nlindent()
     self:list(body, self.nl)
     self:nldedent()
     self:acc("end")
+    --- metalua extensions
+    --[[ elseif rhs[1].tag == "Id"
+           and not is_ident(lhs[1][2][1])
+       then
+          --- block 3
+          --- `foo, ... = ...` when foo is *not* a valid identifier.
+          --- In that case, the spliced 1st variable must get parentheses,
+          --- to be distinguished from a statement splice.
+          --- This cannot happen in a plain Lua AST.
+          self:list(lhs, ", ")
+          self:acc(" = ")
+          self:list(rhs, ", ")
+       elseif node[3] then
+          --- block 5
+          --- `... = ...`, no syntax sugar, annotation ---
+          local annot = node[3]
+          local n = #lhs
+          for i = 1, n do
+             local ell, a = lhs[i], annot[i]
+             self:node(ell)
+             if a then
+                self:acc ' #'
+                self:node(a)
+             end
+             if i ~= n then self:acc ', ' end
+          end
+          self:acc " = "
+          self:list(rhs, ", ")--]]
   else
-    self:list(lhs, ", ")
+    --- block 4
+    --- `... = ...`, no syntax sugar ---
+    self:wrapped_list(lhs, ", ")
     self:acc(" = ")
-    self:list(rhs, ", ")
-
-    --
-    -- | `Set{ { `Id{ lhs1name } == lhs1, ... } == lhs, rhs }
-    --       if not is_ident (lhs1name) ->
-    --    -- ``foo, ... = ...'' when foo is *not* a valid identifier.
-    --    -- In that case, the spliced 1st variable must get parentheses,
-    --    -- to be distinguished from a statement splice.
-    --    -- This cannot happen in a plain Lua AST.
-    --    self:acc      "("
-    --    self:node     (lhs1)
-    --    self:acc      ")"
-    --    if lhs[2] then -- more than one lhs variable
-    --       self:acc   ", "
-    --       self:list  (lhs, ", ", 2)
-    --    end
-    --    self:acc      " = "
-    --    self:list     (rhs, ", ")
-    --
-    -- | `Set{ lhs, rhs } ->
-    --    -- ``... = ...'', no syntax sugar --
-    --    self:list  (lhs, ", ")
-    --    self:acc   " = "
-    --    self:list  (rhs, ", ")
-    -- | `Set{ lhs, rhs, annot } ->
-    --    -- ``... = ...'', no syntax sugar, annotation --
-    --    local n = #lhs
-    --    for i=1,n do
-    --        local ell, a = lhs[i], annot[i]
-    --        self:node (ell)
-    --        if a then
-    --            self:acc ' #'
-    --            self:node(a)
-    --        end
-    --        if i~=n then self:acc ', ' end
-    --    end
-    --    self:acc   " = "
-    --    self:list  (rhs, ", ")
+    self:wrapped_list(rhs, ", ")
   end
 end
 
@@ -770,13 +764,14 @@ function M:Local(node, lhs, rhs, annots)
         end
       end
     else
-      self:list(lhs, ", ")
+      self:wrapped_list(lhs, ", ")
     end
     if rhs[1] then
       self:acc(" = ")
-      self:list(rhs, ", ")
+      self:wrapped_list(rhs, ", ")
     end
-  else -- Can't create a local statement with 0 variables in plain Lua
+  else
+    --- Can't create a local statement with 0 variables in plain Lua
     self:acc(pp.tostring(node, "nohash"))
   end
 end
