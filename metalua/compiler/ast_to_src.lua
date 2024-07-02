@@ -145,7 +145,7 @@ end
 --- toplevel definitions are separated by an extra empty line.
 --- For some use cases, the extra line is not desired, can be overridden
 --- e.g. multiple comments don't need the extra line in between.
---- @param noextra? boolean
+--- @param noextra? 'noextra'
 --------------------------------------------------------------------------------
 function M:nl(noextra)
    if self.current_indent == 0 and not noextra then
@@ -414,7 +414,7 @@ function M:node(node)
       for _, co in pairs(comments) do
          if co.position == pos then
             --- comes _after_ a previous expression
-            if co.position == 'last' then self:nl(true) end
+            if co.position == 'last' then self:nl('noextra') end
             --- preserve existing newlines
             local lines = string.lines(co.text)
             if co.multiline then
@@ -433,7 +433,7 @@ function M:node(node)
                local wrapped = string.wrap_array(lines, self.wrap)
                for i, l in ipairs(wrapped) do
                   self:acc(l)
-                  if i ~= #wrapped then self:nl(true) end
+                  if i ~= #wrapped then self:nl('noextra') end
                end
             else
                local ls = co.first.l
@@ -456,7 +456,7 @@ function M:node(node)
                            pre = pre .. ' '
                         end
                         self:acc(pre .. l)
-                        if i ~= #wrapped then self:nl(true) end
+                        if i ~= #wrapped then self:nl('noextra') end
                      end
                   end
                else
@@ -472,12 +472,12 @@ function M:node(node)
                         pre = pre .. ' '
                      end
                      self:acc(pre .. l)
-                     if i ~= #wrapped then self:nl(true) end
+                     if i ~= #wrapped then self:nl('noextra') end
                   end
                end
             end
             --- comes _before_ the next expression
-            if co.position == 'first' then self:nl(true) end
+            if co.position == 'first' then self:nl('noextra') end
          end
       end
    end
@@ -929,7 +929,7 @@ function M:Function(_, params, body, annots)
    self:list(body, self.nl)
    self:nldedent()
    self:acc("end")
-   self:nl(true)
+   self:nl('noextra')
 end
 
 function M:Table(node)
