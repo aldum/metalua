@@ -25,29 +25,29 @@
 --
 ---------------------------------------------------------------------
 
-local pp = require("metalua.pprint")
+local pp             = require 'metalua.pprint'
 
-local luaK = require("metalua.compiler.bytecode.lcode")
-local luaP = require("metalua.compiler.bytecode.lopcodes")
+local luaK           = require 'metalua.compiler.bytecode.lcode'
+local luaP           = require 'metalua.compiler.bytecode.lopcodes'
 
-local debugf = function() end
+local debugf         = function() end
 --local debugf=printf
 
-local stat = {}
-local expr = {}
+local stat           = {}
+local expr           = {}
 
-local M = {}
+local M              = {}
 
-M.MAX_INT = 2147483645 -- INT_MAX-2 for 32-bit systems (llimits.h)
-M.MAXVARS = 200 -- (llimits.h)
-M.MAXUPVALUES = 32 -- (llimits.h)
-M.MAXPARAMS = 100 -- (llimits.h)
-M.LUA_MAXPARSERLEVEL = 200 -- (llimits.h)
+M.MAX_INT            = 2147483645 -- INT_MAX-2 for 32-bit systems (llimits.h)
+M.MAXVARS            = 200        -- (llimits.h)
+M.MAXUPVALUES        = 32         -- (llimits.h)
+M.MAXPARAMS          = 100        -- (llimits.h)
+M.LUA_MAXPARSERLEVEL = 200        -- (llimits.h)
 
 -- from lobject.h
-M.VARARG_HASARG = 1
-M.VARARG_ISVARARG = 2
-M.VARARG_NEEDSARG = 4
+M.VARARG_HASARG      = 1
+M.VARARG_ISVARARG    = 2
+M.VARARG_NEEDSARG    = 4
 
 local function hasmultret(k)
    return k == "VCALL" or k == "VVARARG"
@@ -143,11 +143,11 @@ local function check_conflict(fs, lh, v)
       if lh.v.k == "VINDEXED" then
          if lh.v.info == v.info then -- conflict?
             conflict = true
-            lh.v.info = extra -- previous assignment will use safe copy
+            lh.v.info = extra        -- previous assignment will use safe copy
          end
-         if lh.v.aux == v.info then -- conflict?
+         if lh.v.aux == v.info then  -- conflict?
             conflict = true
-            lh.v.aux = extra -- previous assignment will use safe copy
+            lh.v.aux = extra         -- previous assignment will use safe copy
          end
       end
       lh = lh.prev
@@ -453,7 +453,7 @@ printv(var)
 printv(base)
 print("\n")
 --]]
-   if fs == nil then -- no more levels?
+   if fs == nil then                        -- no more levels?
       init_exp(var, "VGLOBAL", luaP.NO_REG) -- default is global variable
       return "VGLOBAL"
    else
@@ -463,7 +463,7 @@ print("\n")
          if not base then
             markupval(fs, v) -- local will be used as an upval
          end
-      else -- not found at current level; try upper one
+      else                   -- not found at current level; try upper one
          if singlevaraux(fs.prev, n, var, false) == "VGLOBAL" then
             return "VGLOBAL"
          end
@@ -510,7 +510,7 @@ local function parlist(fs, ast_params)
    fs.f.numparams = fs.nactvar
    fs.f.is_vararg = dots and M.VARARG_ISVARARG or 0
    adjustlocalvars(fs, nparams)
-   fs.f.numparams = fs.nactvar --FIXME vararg must be taken in account
+   fs.f.numparams = fs.nactvar      -- FIXME vararg must be taken in account
    luaK:reserveregs(fs, fs.nactvar) -- reserve register for parameters
 end
 
@@ -606,18 +606,21 @@ end
 -- [isnum]
 ------------------------------------------------------------------------
 local function forbody(fs, ast_body, base, nvars, isnum)
-   local bl = {} -- BlockCnt
+   local bl = {}          -- BlockCnt
    adjustlocalvars(fs, 3) -- control variables
-   local prep = isnum and luaK:codeAsBx(fs, "OP_FORPREP", base, luaK.NO_JUMP) or luaK:jump(fs)
-   enterblock(fs, bl, false) -- loop block
+   local prep =
+       isnum and luaK:codeAsBx(fs, "OP_FORPREP", base, luaK.NO_JUMP)
+       or luaK:jump(fs)
+   enterblock(fs, bl, false)  -- loop block
    adjustlocalvars(fs, nvars) -- scope for declared variables
    luaK:reserveregs(fs, nvars)
    block(fs, ast_body)
    leaveblock(fs)
    --luaK:patchtohere (fs, prep-1)
    luaK:patchtohere(fs, prep)
-   local endfor = isnum and luaK:codeAsBx(fs, "OP_FORLOOP", base, luaK.NO_JUMP)
-      or luaK:codeABC(fs, "OP_TFORLOOP", base, 0, nvars)
+   local endfor =
+       isnum and luaK:codeAsBx(fs, "OP_FORLOOP", base, luaK.NO_JUMP)
+       or luaK:codeABC(fs, "OP_TFORLOOP", base, 0, nvars)
    luaK:fixline(fs, ast_body.line) -- pretend that 'OP_FOR' starts the loop
    luaK:patchlist(fs, isnum and endfor or luaK:jump(fs), prep + 1)
 end
@@ -736,7 +739,7 @@ end
 
 function stat.Return(fs, ast)
    local e = {} -- expdesc
-   local first -- registers with returned values
+   local first  -- registers with returned values
    local nret = #ast
 
    if nret == 0 then
@@ -758,12 +761,13 @@ function stat.Return(fs, ast)
       else
          --printf("* Return multiple vals in nextreg %i", fs.freereg)
          luaK:exp2nextreg(fs, e) -- values must go to the 'stack'
-         first = fs.nactvar -- return all 'active' values
+         first = fs.nactvar      -- return all 'active' values
          assert(nret == fs.freereg - first)
       end
    end
    luaK:ret(fs, first, nret)
 end
+
 ------------------------------------------------------------------------
 
 function stat.Local(fs, ast)
@@ -817,7 +821,7 @@ function stat.If(fs, ast)
    local escapelist = luaK.NO_JUMP
 
    local flist = test_then_block(fs, ast[1], ast[2]) -- 'then' statement
-   for i = 3, #ast - 1, 2 do -- 'elseif' statement
+   for i = 3, #ast - 1, 2 do                         -- 'elseif' statement
       escapelist = luaK:concat(fs, escapelist, luaK:jump(fs))
       luaK:patchtohere(fs, flist)
       flist = test_then_block(fs, ast[i], ast[i + 1])
@@ -948,10 +952,10 @@ function stat.Set(fs, ast)
          elseif #ast_vals > nvars then
             adjust_assign(fs, nvars, #ast_vals, e)
             fs.freereg = fs.freereg - #ast_vals + nvars
-         else -- #ast_vals == nvars (and we're at last lhs)
+         else                     -- #ast_vals == nvars (and we're at last lhs)
             luaK:setoneret(fs, e) -- close last expression
             luaK:storevar(fs, lhs.v, e)
-            return -- avoid default
+            return                -- avoid default
          end
       end
       init_exp(e, "VNONRELOC", fs.freereg - 1) -- default assignment
@@ -1022,8 +1026,8 @@ function stat.Label(fs, ast)
       -- Patch forward gotos which were targetting this label.
       ----------------------------------------------------------------
       for _, goto_pc in ipairs(gotos) do
-         local close_instr = fs.f.code[goto_pc]
-         local jmp_instr = fs.f.code[goto_pc + 1]
+         local close_instr  = fs.f.code[goto_pc]
+         local jmp_instr    = fs.f.code[goto_pc + 1]
          local goto_nactvar = luaP:GETARG_A(close_instr)
          if fs.nactvar < goto_nactvar then
             luaP:SETARG_A(close_instr, fs.nactvar)
@@ -1102,7 +1106,8 @@ function expr.expr(fs, ast, v)
    if parser then
       parser(fs, ast, v)
    elseif not ast.tag then
-      error("No tag in expression " .. pp.tostring(ast, { line_max = 80, hide_hash = 1, metalua_tag = 1 }))
+      error("No tag in expression " ..
+         pp.tostring(ast, { line_max = 80, hide_hash = 1, metalua_tag = 1 }))
    else
       error("No parser for node `" .. ast.tag)
    end
@@ -1114,15 +1119,19 @@ end
 function expr.Nil(fs, ast, v)
    init_exp(v, "VNIL", 0)
 end
+
 function expr.True(fs, ast, v)
    init_exp(v, "VTRUE", 0)
 end
+
 function expr.False(fs, ast, v)
    init_exp(v, "VFALSE", 0)
 end
+
 function expr.String(fs, ast, v)
    codestring(fs, v, ast[1])
 end
+
 function expr.Number(fs, ast, v)
    init_exp(v, "VKNUM", 0)
    v.nval = ast[1]
@@ -1149,8 +1158,8 @@ function expr.Table(fs, ast, v)
    local pc = luaK:codeABC(fs, "OP_NEWTABLE", 0, 0, 0)
    local cc = { v = {}, na = 0, nh = 0, tostore = 0, t = v } -- ConsControl
    init_exp(v, "VRELOCABLE", pc)
-   init_exp(cc.v, "VVOID", 0) -- no value (yet)
-   luaK:exp2nextreg(fs, v) -- fix it at stack top (for gc)
+   init_exp(cc.v, "VVOID", 0)                                -- no value (yet)
+   luaK:exp2nextreg(fs, v)                                   -- fix it at stack top (for gc)
    for i = 1, #ast do
       assert(cc.v.k == "VVOID" or cc.tostore > 0)
       closelistfield(fs, cc);

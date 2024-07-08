@@ -83,6 +83,7 @@ function M.make_parser(kind, p)
    function p.transformers:add(x)
       table.insert(self, x)
    end
+
    setmetatable(p, parser_metatable)
    return p
 end
@@ -195,8 +196,8 @@ function M.parse_error(lx, fmt, ...)
       line, column, offset, p_line, p_column = -1, -1, -1, -1, -1
    end
 
-   local msg  = string.format("line %i, char %i: "..fmt, line, column, ...)
-   if file and file~='?' then msg = "file "..file..", "..msg end
+   local msg = string.format("line %i, char %i: " .. fmt, line, column, ...)
+   if file and file ~= '?' then msg = "file " .. file .. ", " .. msg end
    local prev_token = string.format("facing: line %i, char %i", p_line, p_column)
    msg = string.format("%s\n%s", msg, prev_token)
 
@@ -347,7 +348,7 @@ function M.multisequence(p)
             error("In a multisequence parser, all but one sequences " .. "must start with a keyword")
          else
             self.default = s
-         end -- first default
+         end                             -- first default
       else
          if self.sequences[keyword] then -- duplicate keyword
             -- TODO: warn that initial keyword `keyword` is overloaded in multiseq
@@ -491,7 +492,7 @@ function M.expr(p)
          local fli = lx:lineinfo_right()
          local p2_func, p2 = get_parser_info(self.prefix)
          local op = p2_func and p2_func(lx)
-         if op then -- Keyword-based sequence found
+         if op then                         -- Keyword-based sequence found
             local ili = lx:lineinfo_right() -- Intermediate LineInfo
             local e = p2.builder(op, self:parse(lx, p2.prec))
             local lli = lx:lineinfo_left()
@@ -536,11 +537,11 @@ function M.expr(p)
             local lli = lx:lineinfo_left()
             return transform(transform(e2, pflat, fli, lli), self, fli, lli)
 
-         -----------------------------------------
-         -- Handle regular infix operators: [e] the LHS is known,
-         -- just gather the operator and [e2] the RHS.
-         -- Result goes in [e3].
-         -----------------------------------------
+            -----------------------------------------
+            -- Handle regular infix operators: [e] the LHS is known,
+            -- just gather the operator and [e2] the RHS.
+            -- Result goes in [e3].
+            -----------------------------------------
          elseif p2.prec and p2.prec > prec or p2.prec == prec and p2.assoc == "right" then
             local fli = e.lineinfo.first -- lx:lineinfo_right()
             local op = p2_func(lx)
@@ -552,15 +553,15 @@ function M.expr(p)
             local lli = lx:lineinfo_left()
             return transform(transform(e3, p2, fli, lli), self, fli, lli)
 
-         -----------------------------------------
-         -- Check for non-associative operators, and complain if applicable.
-         -----------------------------------------
+            -----------------------------------------
+            -- Check for non-associative operators, and complain if applicable.
+            -----------------------------------------
          elseif p2.assoc == "none" and p2.prec == prec then
             M.parse_error(lx, "non-associative operator!")
 
-         -----------------------------------------
-         -- No infix operator suitable at that precedence
-         -----------------------------------------
+            -----------------------------------------
+            -- No infix operator suitable at that precedence
+            -----------------------------------------
          else
             return false
          end
@@ -627,6 +628,7 @@ function M.expr(p)
    function p:add(...)
       return self.primary:add(...)
    end
+
    return p
 end --</expr>
 
@@ -909,6 +911,7 @@ function M.nonempty(primary)
          return transform(content, self, fli, lli)
       end
    end
+
    return p
 end
 
@@ -916,9 +919,11 @@ local FUTURE_MT = {}
 function FUTURE_MT:__tostring()
    return "<Proxy parser module>"
 end
+
 function FUTURE_MT:__newindex(key, value)
    error("don't write in futures")
 end
+
 function FUTURE_MT:__index(parser_name)
    return function(...)
       local p, m = rawget(self, "__path"), self.__module
@@ -939,14 +944,17 @@ function FUTURE_MT:__index(parser_name)
 end
 
 function M.future(module, ...)
-   checks("table")
+   checks('table')
    local path = ... and { ... }
    if path then
       for _, x in ipairs(path) do
-         assert(type(x) == "string", "Bad future arg")
+         assert(type(x) == 'string', "Bad future arg")
       end
    end
-   local self = { __module = module, __path = path }
+   local self = {
+      __module = module,
+      __path   = path
+   }
    return setmetatable(self, FUTURE_MT)
 end
 
