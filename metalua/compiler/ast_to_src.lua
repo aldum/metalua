@@ -596,21 +596,27 @@ end
 
 -- TODO: understand associatitivity
 function M:Op(node, op, a, b)
-   if op == "not" and (node[2][1][1] == "eq") then ---TODO:???
-      op, a, b = "ne", node[2][1][2], node[2][1][3]
+   --- Transform ``not (a == b)'' into ``a ~= b''. --
+   if op == "not"
+   then
+      if node[2][1] == "eq" then
+         op, a, b = "ne", node[2][2], node[2][3]
+      end
+      if (node[2].tag == "Paren" and node[2][1][1] == "eq")
+      then
+         op, a, b = "ne", node[2][1][2], node[2][1][3]
+      end
    end
+
    if b then -- binary operator.
       local left_paren, right_paren
-      if a.tag == "Op" and op_prec[op] >= op_prec[a[1]] then
-         left_paren = true
-      else
-         left_paren = false
+      if a.tag == "Op" then
+         left_paren = op_prec[op] >= op_prec[a[1]]
       end
-      if b.tag == "Op" and op_prec[op] >= op_prec[b[1]] then
-         right_paren = true
-      else
-         right_paren = false
+      if b.tag == "Op" then
+         right_paren = op_prec[op] >= op_prec[b[1]]
       end
+
       self:acc(left_paren and "(")
       self:node(a)
       self:acc(left_paren and ")")
@@ -622,10 +628,8 @@ function M:Op(node, op, a, b)
       self:acc(right_paren and ")")
    else -- unary operator.
       local paren
-      if a.tag == "Op" and op_prec[op] >= op_prec[a[1]] then
-         paren = true
-      else
-         paren = false
+      if a.tag == "Op" then
+         paren = op_prec[op] >= op_prec[a[1]]
       end
       self:acc(op_symbol[op])
       self:acc(paren and "(")
