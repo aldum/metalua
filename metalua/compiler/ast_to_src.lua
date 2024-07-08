@@ -85,6 +85,17 @@ function M:nldedent()
 end
 
 --------------------------------------------------------------------------------
+-- Insert a new line indented deeper.
+--------------------------------------------------------------------------------
+function M:nltempindent(extra)
+   local add = extra or 1
+   local depth = self.current_indent
+   self.current_indent = depth + add
+   self:nl()
+   self.current_indent = depth
+end
+
+--------------------------------------------------------------------------------
 -- Keywords, which are illegal as identifiers.
 --------------------------------------------------------------------------------
 local keywords_list = {
@@ -280,9 +291,13 @@ function M:Set(node)
    local rhs = node[2]
    -- ``function foo:bar(...) ... end'' --
    if
+   -- LHS = { `Index{ lhs, `String{ method } } },
+   --       { `Index{ lhs[1][1], `String{ lhs[1][2][1] } } },
+   -- RHS = { `Function{ { `Id "self", ... } == params, body } } }
+   --       { `Function{ { `Id "rhs[1][1][1][1]", ... } == params, body } } }
        lhs[1].tag == "Index"
        and rhs[1].tag == "Function"
-       and rhs[1][1][1][1] == "self"
+       and rhs[1][1][1] and rhs[1][1][1][1] == "self"
        and is_idx_stack(lhs[1][1])
        and is_ident(lhs[1][2][1])
    then
@@ -292,7 +307,7 @@ function M:Set(node)
       -- TODO:
       -- local params = node[2]
       self:acc("function ")
-      self:node(lhs)
+      self:node(lhs[1][1])
       self:acc(":")
       self:acc(method)
       self:acc("(")
