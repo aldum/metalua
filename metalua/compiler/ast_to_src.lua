@@ -817,14 +817,14 @@ function M:Invoke(node, f, method)
   self:acc(method[1])
   self:acc("(")
   -- self:acc(parens and "(" or " ")
-  self:wrapped_list(node, ", ", 3, 'all')  -- Skip args #1 and #2, object and method name.
+  self:wrapped_list(node, ", ", 3, 'all') --- Skip args #1 and #2, object and method name.
   -- self:acc(parens and ")")
   self:acc(")")
 end
 
 function M:Return(node)
   self:acc("return ")
-  self:list(node, ", ")
+  self:wrapped_list(node, ", ")
 end
 
 M.Break = "break"
