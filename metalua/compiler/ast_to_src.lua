@@ -727,7 +727,7 @@ function M:If(node)
     self:node(cond)
     local ml = self._lines > lc
     if ml then
-      self:nl()
+      self:nl('noextra')
       self:acc("then")
     else
       self:acc(" then")
