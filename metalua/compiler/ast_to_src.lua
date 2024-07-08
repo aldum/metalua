@@ -287,6 +287,8 @@ function M:node(node)
       if co.position == pos then
         if co.position == 'last' then self:nl(true) end
         local lines = string.lines(co.text)
+        local ls = co.first.l
+        local le = co.last.l
         if co.multiline then
           local wrapped = string.wrap_array(lines, self.wrap - 4)
           self:acc('--[[')
@@ -297,8 +299,6 @@ function M:node(node)
           end
           self:acc(']]')
         else
-          local ls = co.first.l
-          local le = co.last.l
           local wrapped = string.wrap_array(lines, self.wrap - 3)
           if ls == le then
             --- single line comment
@@ -306,9 +306,8 @@ function M:node(node)
               self:acc('--')
             else
               for i, l in ipairs(wrapped) do
-                local first = string.sub(l, 1, 1)
                 local pre = '--'
-                if i == 1 and first == ' ' or first == '-'
+                if i == 1 and string.sub(l, 1, 1) == ' '
                 then
                 else
                   pre = pre .. ' '
@@ -331,6 +330,7 @@ function M:node(node)
             end
           end
         end
+
         if co.position == 'first' then self:nl(true) end
       end
     end
