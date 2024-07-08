@@ -224,14 +224,12 @@ function M:extract_comments(node)
     local present = self.comment_ids[idf] or self.comment_ids[idl]
     if not present then
       local comment_text    = c[1]
-      local len             = string.len(comment_text)
+      local has_next        = c[2]
       local n_l             = #(string.lines(comment_text))
       local cfi             = c.lineinfo.first
       local cla             = c.lineinfo.last
       local cfirst          = { l = cfi.line, c = cfi.column }
       local clast           = { l = cla.line, c = cla.column }
-      local off             = cla.offset - cfi.offset
-      local d               = off - len
       local l_d             = cla.line - cfi.line
       local newline         = (n_l ~= 0 and n_l == l_d)
       local li              = {
@@ -240,7 +238,7 @@ function M:extract_comments(node)
         first = cfirst,
         last = clast,
         text = comment_text,
-        multiline = (d > 4),
+        multiline = has_next,
         position = pos,
         prepend_newline = newline
       }
