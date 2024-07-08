@@ -654,7 +654,7 @@ function M:Set(node)
     local params = rhs[1][1]
     local body = rhs[1][2]
     self:acc("function ")
-    self:node(lhs)
+    self:node(lhs[1])
     self:acc("(")
     self:wrapped_list(params, ", ", nil, 'all')
     self:acc(")")
@@ -830,7 +830,7 @@ end
 function M:Call(node, f)
   self:node(f)
   self:acc("(")
-  self:wrapped_list(node, ", ", 2, 'all')  --- skip `f'.
+  self:wrapped_list(node, ", ", 2, 'all') --- skip `f'.
   self:acc(")")
 end
 
