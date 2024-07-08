@@ -22,6 +22,7 @@
 --- @field current_indent integer
 --- @field indent_step string
 --- @field _line_len integer
+--- @field _lines integer
 --- @field comment_ids table
 --- @field wrap integer
 local M = {}
@@ -43,6 +44,8 @@ function M.new(seen_comments, w)
     comment_ids = seen_comments or {},
     -- Number of characters since last linebreak
     _line_len = 0,
+    -- Number of linebreaks
+    _lines = 0,
     -- wrap length
     wrap = w or 80
   }
@@ -136,10 +139,13 @@ end
 function M:nl(noextra)
   if self.current_indent == 0 and not noextra then
     self:acc("\n")
+    self._line_len = 0
+    self._lines = self._lines + 1
   end
   local ind = self.indent_step:rep(self.current_indent)
   self:acc("\n" .. ind)
   self._line_len = string.len(ind)
+  self._lines = self._lines + 1
 end
 
 --------------------------------------------------------------------------------
