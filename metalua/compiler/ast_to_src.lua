@@ -31,7 +31,13 @@ M.__index = M
 local pp = require("metalua.pprint")
 require("stringutils")
 
--- Instanciate a new AST->source synthetizer
+
+--------------------------------------------------------------------------------
+--- Instantiate a new AST->source synthetizer
+--- @param seen_comments integer[]?
+--- @param w integer?
+--- @return M
+--------------------------------------------------------------------------------
 function M.new(seen_comments, w)
   local self = {
     -- Accumulates pieces of source as strings
@@ -53,13 +59,17 @@ function M.new(seen_comments, w)
 end
 
 --------------------------------------------------------------------------------
--- Run a synthetizer on the `ast' arg and return the source as a string.
--- Can also be used as a static method `M.run (ast)'; in this case,
--- a temporary Metizer is instantiated on the fly.
+--- Run a synthetizer on the `ast' arg and return the source as a string.
+--- Can also be used as a static method `M.run (ast)'; in this case,
+--- a temporary Metizer is instantiated on the fly.
+--- @param seen_comments integer[]?
+--- @param w integer?
+--- @return string
+--- @return integer[]
 --------------------------------------------------------------------------------
-function M:run(ast)
+function M:run(ast, seen_comments, w)
   if not ast then
-    self, ast = M.new(), self
+    self, ast = M.new(seen_comments, w), self
   end
   self._acc = {}
   self:node(ast)
@@ -93,6 +103,7 @@ end
 --------------------------------------------------------------------------------
 --- Accumulate a piece of source file in the synthetizer.
 --- @param x string
+--------------------------------------------------------------------------------
 function M:acc(x)
   if x then
     local clen = self._line_len
@@ -134,8 +145,8 @@ end
 --- toplevel definitions are separated by an extra empty line.
 --- For some use cases, the extra line is not desired, can be overridden
 --- e.g. multiple comments don't need the extra line in between.
---------------------------------------------------------------------------------
 --- @param noextra? boolean
+--------------------------------------------------------------------------------
 function M:nl(noextra)
   if self.current_indent == 0 and not noextra then
     self:acc("\n")
@@ -149,7 +160,7 @@ function M:nl(noextra)
 end
 
 --------------------------------------------------------------------------------
--- Increase indentation and accumulate a new line.
+--- Increase indentation and accumulate a new line.
 --------------------------------------------------------------------------------
 function M:nlindent()
   self.current_indent = self.current_indent + 1
@@ -157,7 +168,7 @@ function M:nlindent()
 end
 
 --------------------------------------------------------------------------------
--- Decrease indentation and accumulate a new line.
+--- Decrease indentation and accumulate a new line.
 --------------------------------------------------------------------------------
 function M:nldedent()
   self.current_indent = self.current_indent - 1
@@ -177,7 +188,7 @@ function M:nltempindent(extra)
 end
 
 --------------------------------------------------------------------------------
--- Keywords, which are illegal as identifiers.
+--- Keywords, which are illegal as identifiers.
 --------------------------------------------------------------------------------
 local keywords_list = {
   "and",
@@ -208,7 +219,7 @@ for _, kw in pairs(keywords_list) do
 end
 
 --------------------------------------------------------------------------------
--- Return true iff string `id' is a legal identifier name.
+--- Return true iff string `id' is a legal identifier name.
 --------------------------------------------------------------------------------
 local function is_ident(id)
   -- HACK:
@@ -321,8 +332,11 @@ local op_comm = {
   ["or"] = true,
 }
 
+--------------------------------------------------------------------------------
+--- Extract comments from AST
 --- @param node token
 --- @return table
+--------------------------------------------------------------------------------
 function M:extract_comments(node)
   if not node.lineinfo then return {} end
   local lfi = node.lineinfo.first
@@ -379,11 +393,14 @@ function M:extract_comments(node)
   return comments
 end
 
--- Accumulate the source representation of AST `node' in
--- the synthetizer. Most of the work is done by delegating to
--- the method having the name of the AST tag.
--- If something can't be converted to normal sources, it's
--- instead dumped as a `-{ ... }' splice in the source accumulator.
+--------------------------------------------------------------------------------
+--- Accumulate the source representation of AST `node' in
+--- the synthetizer. Most of the work is done by delegating to
+--- the method having the name of the AST tag.
+--- If something can't be converted to normal sources, it's
+--- instead dumped as a `-{ ... }' splice in the source accumulator.
+--- @param node token
+--------------------------------------------------------------------------------
 function M:node(node)
   assert(self ~= M and self._acc)
   if node == nil then
@@ -858,7 +875,6 @@ function M:String(_, str)
   --- format "%q" prints '\n' in an umpractical way IMO,
   --- so this is fixed with the :gsub( ) call.
   if multiline then
-    -- local nl_esc = str:gsub("\n", [[\n]])
     --- split the raw text
     local split = string.lines(str)
     --- add newline placeholders
@@ -952,7 +968,6 @@ function M:Table(node)
   end
 end
 
--- TODO: understand associativity
 function M:Op(node, op, a, b)
   --- Transform ``not (a == b)'' into ``a ~= b''. --
   if op == "not" then
