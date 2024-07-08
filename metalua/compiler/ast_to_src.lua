@@ -70,13 +70,15 @@ function M:acc(x)
 end
 
 --------------------------------------------------------------------------------
--- Accumulate an indented newline.
--- Jumps an extra line if indentation is 0, so that
--- toplevel definitions are separated by an extra empty line.
+--- Accumulate an indented newline.
+--- Jumps an extra line if indentation is 0, so that
+--- toplevel definitions are separated by an extra empty line.
+--- For some use cases, the extra line is not desired, can be overridden
+--- e.g. multiple comments don't need the extra line in between.
 --------------------------------------------------------------------------------
---- @param comment? boolean
-function M:nl(comment)
-  if self.current_indent == 0 and not comment then
+--- @param noextra? boolean
+function M:nl(noextra)
+  if self.current_indent == 0 and not noextra then
     self:acc("\n")
   end
   self:acc("\n" .. self.indent_step:rep(self.current_indent))
