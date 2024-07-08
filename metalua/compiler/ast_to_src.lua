@@ -20,15 +20,16 @@
 local M = {}
 M.__index = M
 
---- TODO: restore comments!
 local pp = require("metalua.pprint")
+require("stringutils")
 
 -- Instantiate a new AST->source synthetizer
 function M.new()
   local self = {
-    _acc = {},           -- Accumulates pieces of source as strings
-    current_indent = 0,  -- Current level of line indentation
-    indent_step = "   ", -- Indentation symbol, normally spaces or '\t'
+    _acc = {},             -- Accumulates pieces of source as strings
+    current_indent = 0,    -- Current level of line indentation
+    indent_step = "   ",   -- Indentation symbol, normally spaces or '\t'
+    comment_ids = {},      -- Comments index accumulator
   }
   return setmetatable(self, M)
 end
@@ -61,8 +62,9 @@ end
 -- Jumps an extra line if indentation is 0, so that
 -- toplevel definitions are separated by an extra empty line.
 --------------------------------------------------------------------------------
-function M:nl()
-  if self.current_indent == 0 then
+--- @param comment? boolean
+function M:nl(comment)
+  if self.current_indent == 0 and not comment then
     self:acc("\n")
   end
   self:acc("\n" .. self.indent_step:rep(self.current_indent))
@@ -202,34 +204,118 @@ local op_symbol = {
   unm = "-",
 }
 
+--- @param node token
+--- @return table
+function M:extract_comments(node)
+  local lfi = node.lineinfo.first
+  local lla = node.lineinfo.last
+  local comments = {}
+
+  --- @param c table
+  --- @param pos 'first'|'last'
+  local function add_comment(c, pos)
+    local id = c.lineinfo.first.id
+    if not self.comment_ids[id] then
+      local comment_text   = c[1]
+      local len            = string.len(comment_text)
+      local cfi            = c.lineinfo.first
+      local cla            = c.lineinfo.last
+      local cfirst         = { l = cfi.line, c = cfi.column }
+      local clast          = { l = cla.line, c = cla.column }
+      local off            = cla.offset - cfi.offset
+      local d              = off - len
+      local li             = {
+        first = cfirst,
+        last = clast,
+        text = comment_text,
+        multiline = (d == 5),
+        position = pos,
+        add_newline = false,
+      }
+      self.comment_ids[id] = true
+      table.insert(comments, li)
+    end
+  end
+  if lfi.comments then
+    for _, c in ipairs(lfi.comments) do
+      add_comment(c, 'first')
+    end
+  end
+  if lla.comments then
+    for _, c in ipairs(lla.comments) do
+      add_comment(c, 'last')
+    end
+  end
+
+  return comments
+end
+
 -- Accumulate the source representation of AST `node' in
 -- the synthetizer. Most of the work is done by delegating to
 -- the method having the name of the AST tag.
 -- If something can't be converted to normal sources, it's
 -- instead dumped as a `-{ ... }' splice in the source accumulator.
 function M:node(node)
-  -- p(node)
   assert(self ~= M and self._acc)
   if node == nil then
     self:acc("<<error>>")
     return
   end
-  if not node.tag then -- tagless block.
+  local comments = self:extract_comments(node)
+  --- @param pos 'first'|'last'
+  local function show_comments(pos)
+    for _, co in pairs(comments) do
+      local ml = false
+      if co.position == pos then
+        if co.position == 'last' then self:nl(true) end
+        local lines = string.lines(co.text)
+        local ls = co.first.l
+        local le = co.last.l
+        if co.multiline then
+          self:acc('--[[')
+          for i, l in ipairs(lines) do
+            self:acc(l)
+            if i ~= #lines then self:nl(true) end
+          end
+          self:acc(']]')
+        else
+          if ls == le then
+            --- single line comment
+            local ct = '--' .. co.text
+            self:acc(ct)
+          else
+            --- multiple comments
+            ml = true
+            for i, l in ipairs(lines) do
+              local ct = '--' .. l
+              self:acc(ct)
+              if i ~= #lines then self:nl(true) end
+            end
+          end
+        end
+        if co.position == 'first' and not ml then self:nl(true) end
+      end
+    end
+  end
+
+  show_comments('first')
+  if not node.tag then  -- tagless block.
     self:list(node, self.nl)
   else
     local f = M[node.tag]
-    if type(f) == "function" then   -- Delegate to tag method.
+    if type(f) == "function" then     -- Delegate to tag method.
       f(self, node, unpack(node))
-    elseif type(f) == "string" then -- tag string.
+    elseif type(f) == "string" then   -- tag string.
       self:acc(f)
-    else
-      -- No appropriate method, fall back to splice dumping.
+    else                              -- No appropriate method, fall back to splice dumping.
       -- This cannot happen in a plain Lua AST.
       self:acc(" -{ ")
-      self:acc(pp.tostring(node, { metalua_tag = 1, hide_hash = 1, line_max = 80 }))
+      self:acc(pp.tostring(node,
+        { metalua_tag = 1, hide_hash = 1, line_max = 80 }))
       self:acc(" }")
     end
   end
+  show_comments('last')
 end
 
 --------------------------------------------------------------------------------
