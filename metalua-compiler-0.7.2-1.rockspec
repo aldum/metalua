@@ -26,6 +26,7 @@ dependencies = {
     "readline >= 1.3",         -- Better REPL experience
     "metalua-parser == 0.7.2", -- AST production
     "luautf8 >= 0.1.5",        -- UTF8 support
+    "busted >= 2.1.2",         -- Unit tests
 }
 
 build = {

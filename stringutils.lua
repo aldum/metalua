@@ -236,3 +236,10 @@ end
 string.unlines = function(strs)
   return string.join(strs, '\n')
 end
+
+--- @param t string
+--- @return string?
+string.quote = function(t)
+  if not t or type(t) ~= 'string' then return end
+  return string.format("'%s'", t)
+end
