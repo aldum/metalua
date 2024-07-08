@@ -1008,11 +1008,13 @@ function M:Op(node, op, a, b)
     self:acc(left_paren and ")" or '')
 
     if op_cond[op] then
-      if type(a[2]) == "table"
-          and type(b[2]) == "table"
-          and (a[2].lineinfo and b[2].lineinfo
-            and a[2].lineinfo.first and b[2].lineinfo.first
-            and a[2].lineinfo.first.line < b[2].lineinfo.first.line)
+      local pre = op_symbol[op] .. self:prerender(b)
+      if not self:fits(pre)
+          or (type(a[2]) == "table"
+            and type(b[2]) == "table"
+            and (a[2].lineinfo and b[2].lineinfo
+              and a[2].lineinfo.first and b[2].lineinfo.first
+              and a[2].lineinfo.first.line < b[2].lineinfo.first.line))
       then
         self:nltempindent(2)
       end
@@ -1038,6 +1040,10 @@ function M:Op(node, op, a, b)
 end
 
 function M:Paren(_, content)
+  local pre = "(" .. self:prerender(content) .. ")"
+  if not self:fits(pre) then
+    self:nltempindent()
+  end
   self:acc("(")
   self:node(content)
   self:acc(")")
