@@ -237,6 +237,10 @@ local op_symbol = {
 }
 
 --------------------------------------------------------------------------------
+--- boolean operators that tie compound conditions together
+--------------------------------------------------------------------------------
+local op_cond = { ["and"] = true, ["or"] = true }
+--------------------------------------------------------------------------------
 --- right-binding associative operators
 --------------------------------------------------------------------------------
 local op_infixr_assoc = { concat = true }
@@ -387,13 +391,13 @@ function M:node(node)
   end
 
   show_comments('first')
-  if not node.tag then  -- tagless block.
+  if not node.tag then -- tagless block.
     self:list(node, self.nl)
   else
     local f = M[node.tag]
-    if type(f) == "function" then     -- Delegate to tag method.
+    if type(f) == "function" then   -- Delegate to tag method.
       f(self, node, unpack(node))
-    elseif type(f) == "string" then   -- tag string.
+    elseif type(f) == "string" then -- tag string.
       self:acc(f)
     else
       --- No appropriate method, fall back to splice dumping.
@@ -833,7 +837,7 @@ function M:Op(node, op, a, b)
     end
   end
 
-  if b then  --- binary operator.
+  if b then --- binary operator.
     local left_paren, right_paren = false, false
     if a.tag == "Op"
         and op_prec[op] >= op_prec[a[1]]
@@ -852,12 +856,22 @@ function M:Op(node, op, a, b)
     self:node(a)
     self:acc(left_paren and ")")
 
+    if op_cond[op] then
+      if type(a[2]) == "table"
+          and type(b[2]) == "table"
+          and (a[2].lineinfo and b[2].lineinfo
+            and a[2].lineinfo.first and b[2].lineinfo.first
+            and a[2].lineinfo.first.line < b[2].lineinfo.first.line)
+      then
+        self:nltempindent(2)
+      end
+    end
     self:acc(op_symbol[op])
 
     self:acc(right_paren and "(")
     self:node(b)
     self:acc(right_paren and ")")
-  else  --- unary operator.
+  else --- unary operator.
     local paren = false
     if a.tag == "Op" then
       paren = op_prec[op] >= op_prec[a[1]]
