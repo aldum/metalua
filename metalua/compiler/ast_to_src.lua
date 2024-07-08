@@ -151,12 +151,14 @@ local function is_ident(id)
   return string["match"](id, "^[%a_][%w_]*$") and not keywords[id]
 end
 
+--------------------------------------------------------------------------------
 --- Return true iff ast represents a legal function name for
 --- syntax sugar ``function foo.bar.gnat() ... end'':
 --- a series of nested string indexes, with an identifier as
 --- the innermost node.
 --- @param ast table
 --- @return boolean
+--------------------------------------------------------------------------------
 local function is_idx_stack(ast)
   local tag = ast.tag
   if tag == "Index" then
@@ -169,8 +171,26 @@ local function is_idx_stack(ast)
 end
 
 --------------------------------------------------------------------------------
--- Operator precedences, in increasing order.
--- This is not directly used, it's used to generate op_prec below.
+--- Returns the length of a call/index chain
+--- @param ast table
+--- @param depth integer?
+--- @return integer
+--------------------------------------------------------------------------------
+local function is_call_chain(ast, depth)
+  local d = depth or 0
+  local tag = ast.tag
+  if tag == "Index" or tag == "Invoke" then
+    return is_call_chain(ast[1], d + 1)
+  elseif tag == "Id" then
+    return d + 1
+  else
+    return d
+  end
+end
+
+--------------------------------------------------------------------------------
+--- Operator precedences, in increasing order.
+--- This is not directly used, it's used to generate op_prec below.
 --------------------------------------------------------------------------------
 local op_preprec = {
   { "or",    "and" },
@@ -184,7 +204,7 @@ local op_preprec = {
 }
 
 --------------------------------------------------------------------------------
--- operator --> precedence table, generated from op_preprec.
+--- operator --> precedence table, generated from op_preprec.
 --------------------------------------------------------------------------------
 local op_prec = {}
 
@@ -195,7 +215,7 @@ for prec, ops in ipairs(op_preprec) do
 end
 
 --------------------------------------------------------------------------------
--- operator --> source representation.
+--- operator --> source representation.
 --------------------------------------------------------------------------------
 local op_symbol = {
   add = " + ",
@@ -214,6 +234,20 @@ local op_symbol = {
   ["not"] = "not ",
   len = "#",
   unm = "-",
+}
+
+--------------------------------------------------------------------------------
+--- right-binding associative operators
+--------------------------------------------------------------------------------
+local op_infixr_assoc = { concat = true }
+--------------------------------------------------------------------------------
+--- commutative operators
+--------------------------------------------------------------------------------
+local op_comm = {
+  add = true,
+  mul = true,
+  ["and"] = true,
+  ["or"] = true,
 }
 
 --- @param node token
@@ -353,16 +387,17 @@ function M:node(node)
   end
 
   show_comments('first')
-  if not node.tag then -- tagless block.
+  if not node.tag then  -- tagless block.
     self:list(node, self.nl)
   else
     local f = M[node.tag]
-    if type(f) == "function" then   -- Delegate to tag method.
+    if type(f) == "function" then     -- Delegate to tag method.
       f(self, node, unpack(node))
-    elseif type(f) == "string" then -- tag string.
+    elseif type(f) == "string" then   -- tag string.
       self:acc(f)
-    else                            -- No appropriate method, fall back to splice dumping.
-      -- This cannot happen in a plain Lua AST.
+    else
+      --- No appropriate method, fall back to splice dumping.
+      --- This cannot happen in a plain Lua AST.
       self:acc(" -{ ")
       self:acc(pp.tostring(node,
         { metalua_tag = 1, hide_hash = 1, line_max = 80 }))
@@ -798,13 +833,19 @@ function M:Op(node, op, a, b)
     end
   end
 
-  if b then -- binary operator.
-    local left_paren, right_paren
-    if a.tag == "Op" then
-      left_paren = op_prec[op] >= op_prec[a[1]]
+  if b then  --- binary operator.
+    local left_paren, right_paren = false, false
+    if a.tag == "Op"
+        and op_prec[op] >= op_prec[a[1]]
+        and not op_comm[a[1]]
+    then
+      left_paren = true
     end
-    if b.tag == "Op" then
-      right_paren = op_prec[op] >= op_prec[b[1]]
+    if b.tag == "Op"
+        and op_prec[op] >= op_prec[b[1]]
+        and not op_infixr_assoc[b[1]]
+    then
+      right_paren = true
     end
 
     self:acc(left_paren and "(")
@@ -816,10 +857,13 @@ function M:Op(node, op, a, b)
     self:acc(right_paren and "(")
     self:node(b)
     self:acc(right_paren and ")")
-  else -- unary operator.
-    local paren
+  else  --- unary operator.
+    local paren = false
     if a.tag == "Op" then
       paren = op_prec[op] >= op_prec[a[1]]
+    end
+    if op == 'len' and is_call_chain(a) > 1 then
+      paren = true
     end
     self:acc(op_symbol[op])
     self:acc(paren and "(")
