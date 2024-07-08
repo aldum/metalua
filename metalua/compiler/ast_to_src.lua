@@ -23,13 +23,17 @@ M.__index = M
 local pp = require("metalua.pprint")
 require("stringutils")
 
--- Instantiate a new AST->source synthetizer
-function M.new()
+-- Instanciate a new AST->source synthetizer
+function M.new(seen_comments)
   local self = {
-    _acc = {},           -- Accumulates pieces of source as strings
-    current_indent = 0,  -- Current level of line indentation
-    indent_step = "   ", -- Indentation symbol, normally spaces or '\t'
-    comment_ids = {},    -- Comments index accumulator
+    -- Accumulates pieces of source as strings
+    _acc = {},
+    -- Current level of line indentation
+    current_indent = 0,
+    -- Indentation symbol, normally spaces or '\t'
+    indent_step = "  ",
+    -- Comments index accumulator
+    comment_ids = seen_comments or {},
   }
   return setmetatable(self, M)
 end
@@ -45,7 +49,7 @@ function M:run(ast)
   end
   self._acc = {}
   self:node(ast)
-  return table.concat(self._acc)
+  return table.concat(self._acc), self.comment_ids
 end
 
 --------------------------------------------------------------------------------
@@ -214,20 +218,24 @@ function M:extract_comments(node)
   --- @param c table
   --- @param pos 'first'|'last'
   local function add_comment(c, pos)
-    local id = c.lineinfo.first.id
-    if not self.comment_ids[id] then
-      local comment_text   = c[1]
-      local len            = string.len(comment_text)
-      local cfi            = c.lineinfo.first
-      local cla            = c.lineinfo.last
-      local cfirst         = { l = cfi.line, c = cfi.column }
-      local clast          = { l = cla.line, c = cla.column }
-      local off            = cla.offset - cfi.offset
-      local d              = off - len
-      local n_l            = #(string.lines(comment_text))
-      local l_d            = cla.line - cfi.line
-      local newline        = (n_l ~= 0 and n_l == l_d)
-      local li             = {
+    local idf = c.lineinfo.first.id
+    local idl = c.lineinfo.last.id
+    local present = self.comment_ids[idf] or self.comment_ids[idl]
+    if not present then
+      local comment_text    = c[1]
+      local len             = string.len(comment_text)
+      local n_l             = #(string.lines(comment_text))
+      local cfi             = c.lineinfo.first
+      local cla             = c.lineinfo.last
+      local cfirst          = { l = cfi.line, c = cfi.column }
+      local clast           = { l = cla.line, c = cla.column }
+      local off             = cla.offset - cfi.offset
+      local d               = off - len
+      local l_d             = cla.line - cfi.line
+      local newline         = (n_l ~= 0 and n_l == l_d)
+      local li              = {
+        idf = idf,
+        idl = idl,
         first = cfirst,
         last = clast,
         text = comment_text,
@@ -235,7 +243,8 @@ function M:extract_comments(node)
         position = pos,
         prepend_newline = newline
       }
-      self.comment_ids[id] = true
+      self.comment_ids[idf] = true
+      self.comment_ids[idl] = true
       table.insert(comments, li)
     end
   end
@@ -866,6 +875,7 @@ end
 
 -- print(M.run(+{stat: local function add(a, b) local c = a + b; return add(a,c) end}))
 
-return function(x)
-  return M.run(x)
+return function(x, ...)
+  local a2s = M.new(...)
+  return a2s:run(x)
 end
