@@ -1,21 +1,21 @@
--------------------------------------------------------------------------------
--- Copyright (c) 2006-2013 Fabien Fleutot and others.
---
--- All rights reserved.
---
--- This program and the accompanying materials are made available
--- under the terms of the Eclipse Public License v1.0 which
--- accompanies this distribution, and is available at
--- http://www.eclipse.org/legal/epl-v10.html
---
--- This program and the accompanying materials are also made available
--- under the terms of the MIT public license which accompanies this
--- distribution, and is available at http://www.lua.org/license.html
---
--- Contributors:
---     Fabien Fleutot - API and implementation
---
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--- Copyright (c) 2006-2013 Fabien Fleutot and others.
+---
+--- All rights reserved.
+---
+--- This program and the accompanying materials are made available
+--- under the terms of the Eclipse Public License v1.0 which
+--- accompanies this distribution, and is available at
+--- http://www.eclipse.org/legal/epl-v10.html
+---
+--- This program and the accompanying materials are also made available
+--- under the terms of the MIT public license which accompanies this
+--- distribution, and is available at http://www.lua.org/license.html
+---
+--- Contributors:
+---     Fabien Fleutot - API and implementation
+---
+--------------------------------------------------------------------------------
 
 --- @class M
 --- @field _acc table
@@ -483,13 +483,13 @@ function M:node(node)
   end
 
   show_comments('first')
-  if not node.tag then -- tagless block.
+  if not node.tag then --- tagless block.
     self:list(node, self.nl)
   else
     local f = M[node.tag]
-    if type(f) == "function" then   -- Delegate to tag method.
+    if type(f) == "function" then   --- Delegate to tag method.
       f(self, node, unpack(node))
-    elseif type(f) == "string" then -- tag string.
+    elseif type(f) == "string" then --- tag string.
       self:acc(f)
     else
       --- No appropriate method, fall back to splice dumping.
@@ -579,7 +579,7 @@ function M:wrapped_list(list, sep, start, split)
     --- TODO
     -- local midpoint = math.ceil(#list / 2)
     -- local starter = {}
-    -- for i = 1, midpoint do4200827
+    -- for i = 1, midpoint do
     --    table.insert(starter, list[i])
     -- end
     -- print('m', midpoint)
@@ -626,10 +626,10 @@ function M:Set(node)
   local lhs = node[1]
   local rhs = node[2]
   if
-  -- LHS = { `Index{ lhs, `String{ method } } },
-  --       { `Index{ lhs[1][1], `String{ lhs[1][2][1] } } },
-  -- RHS = { `Function{ { `Id "self", ... } == params, body } } }
-  --       { `Function{ { `Id "rhs[1][1][1][1]", ... } == params, body } } }
+  --- LHS = { `Index{ lhs, `String{ method } } },
+  ---       { `Index{ lhs[1][1], `String{ lhs[1][2][1] } } },
+  --- RHS = { `Function{ { `Id "self", ... } == params, body } } }
+  ---       { `Function{ { `Id "rhs[1][1][1][1]", ... } == params, body } } }
       lhs[1].tag == "Index"
       and rhs[1].tag == "Function"
       and rhs[1][1][1] and rhs[1][1][1][1] == "self"
@@ -641,8 +641,6 @@ function M:Set(node)
     local method = lhs[1][2][1]
     local params = rhs[1][1]
     local body = rhs[1][2]
-    -- TODO:
-    -- local params = node[2]
     self:acc("function ")
     self:node(lhs[1][1])
     self:acc(":")
@@ -728,7 +726,7 @@ end
 
 function M:If(node)
   for i = 1, #node - 1, 2 do
-    -- for each ``if/then'' and ``elseif/then'' pair --
+    --- for each ``if/then'' and ``elseif/then'' pair --
     local cond, body = node[i], node[i + 1]
     self:acc(i == 1 and "if " or "elseif ")
     local lc = self._lines
@@ -744,7 +742,7 @@ function M:If(node)
     self:list(body, self.nl)
     self:nldedent()
   end
-  -- odd number of children --> last one is an `else' clause --
+  --- odd number of children --> last one is an `else' clause --
   if #node % 2 == 1 then
     self:acc("else")
     self:nlindent()
@@ -762,7 +760,7 @@ function M:Fornum(node, var, first, last)
   self:node(first)
   self:acc(", ")
   self:node(last)
-  if #node == 5 then -- 5 children --> child #4 is a step increment.
+  if #node == 5 then --- 5 children --> child #4 is a step increment.
     self:acc(", ")
     self:node(node[4])
   end
@@ -843,20 +841,11 @@ function M:Call(node, f)
 end
 
 function M:Invoke(node, f, method)
-  -- single string or table literal arg ==> no need for parentheses. --
-  -- local parens
-  -- if node[2].tag == "String" or node[2].tag == "Table" then
-  --    parens = false
-  -- else
-  --    parens = true
-  -- end
   self:node(f)
   self:acc(":")
   self:acc(method[1])
   self:acc("(")
-  -- self:acc(parens and "(" or " ")
   self:wrapped_list(node, ", ", 3, 'all') --- Skip args #1 and #2, object and method name.
-  -- self:acc(parens and ")")
   self:acc(")")
 end
 
@@ -884,7 +873,7 @@ function M:String(_, str)
   --- so this is fixed with the :gsub( ) call.
   if multiline then
     --- split the raw text
-    local split = string.lines(str)
+    local split = string.lines(str) or {}
     --- add newline placeholders
     for i, v in ipairs(split) do
       if i ~= #split then
@@ -948,12 +937,12 @@ function M:Table(node)
     for i, elem in ipairs(node) do
       if elem.tag == "Pair" then
         if elem[1].tag == "String" and is_ident(elem[1][1]) then
-          -- `Pair{ `String{ key }, value }
+          --- `Pair{ `String{ key }, value }
           self:acc(elem[1][1])
           self:acc(" = ")
           self:node(elem[2])
         else
-          -- `Pair{ key, value }
+          --- `Pair{ key, value }
           self:acc("[")
           self:node(elem[1])
           self:acc("] = ")
@@ -1062,11 +1051,11 @@ function M:Index(_, table, key)
   self:acc(paren_table and ")" or "")
 
   if key.tag == 'String' and is_ident(key[1]) then
-    -- ``table [key]''
+    --- ``table [key]''
     self:acc(".")
     self:acc(key[1])
   else
-    -- ``table.key''
+    --- ``table.key''
     self:acc("[")
     self:node(key)
     self:acc("]")
@@ -1076,8 +1065,9 @@ end
 function M:Id(node, name)
   if is_ident(name) then
     self:acc(name)
-  else -- Unprintable identifier, fall back to splice representation.
-    -- This cannot happen in a plain Lua AST.
+  else
+    --- Unprintable identifier, fall back to splice representation.
+    --- This cannot happen in a plain Lua AST.
     self:acc("-{`Id ")
     self:String(node, name)
     self:acc("}")
