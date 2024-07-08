@@ -21,6 +21,7 @@
 --- @field _acc table
 --- @field current_indent integer
 --- @field indent_step string
+--- @field _line_len integer
 --- @field comment_ids table
 --- @field wrap integer
 local M = {}
@@ -40,6 +41,8 @@ function M.new(seen_comments, w)
     indent_step = "  ",
     -- Comments index accumulator
     comment_ids = seen_comments or {},
+    -- Number of characters since last linebreak
+    _line_len = 0,
     -- wrap length
     wrap = w or 80
   }
@@ -65,6 +68,17 @@ end
 --------------------------------------------------------------------------------
 function M:acc(x)
   if x then
+    local clen = self._line_len
+    local l = string.ulen(x)
+    local lines = string.lines(x)
+    local n_l = #lines
+    if l + clen > self.wrap and n_l < 2 then
+      local ind = self.indent_step:rep(self.current_indent + 2)
+      self:acc("\n" .. ind)
+      self._line_len = #ind
+    else
+      self._line_len = clen + l
+    end
     table.insert(self._acc, x)
   end
 end
@@ -81,7 +95,9 @@ function M:nl(noextra)
   if self.current_indent == 0 and not noextra then
     self:acc("\n")
   end
-  self:acc("\n" .. self.indent_step:rep(self.current_indent))
+  local ind = self.indent_step:rep(self.current_indent)
+  self:acc("\n" .. ind)
+  self._line_len = string.len(ind)
 end
 
 --------------------------------------------------------------------------------
