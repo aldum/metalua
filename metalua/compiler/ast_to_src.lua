@@ -70,8 +70,25 @@ function M:render()
 end
 
 --------------------------------------------------------------------------------
--- Accumulate a piece of source file in the synthetizer.
+--- Spin up another instance and render the source for the passed node
+--- @param node token
+--- @return string
 --------------------------------------------------------------------------------
+function M:prerender(node)
+  local comments = {}
+  for k, v in pairs(self.comment_ids) do
+    comments[k] = v
+  end
+  local w = self.wrap
+  local renderer = M.new(comments, w)
+  renderer:node(node)
+  local rendered, _ = renderer:render()
+
+  return rendered
+end
+
+--------------------------------------------------------------------------------
+--- Accumulate a piece of source file in the synthetizer.
 --- @param x string
 function M:acc(x)
   if x then
