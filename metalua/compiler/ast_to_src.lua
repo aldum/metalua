@@ -331,9 +331,9 @@ function M:node(node)
             end
           end
         end
+        if co.position == 'first' then self:nl(true) end
       end
     end
-    if co.position == 'first' then self:nl(true) end
   end
 
   show_comments('first')
@@ -668,9 +668,35 @@ function M:Number(_, n)
 end
 
 function M:String(_, str)
-  -- format "%q" prints '\n' in an umpractical way IMO,
-  -- so this is fixed with the :gsub( ) call.
-  self:acc(string.format("%q", str):gsub("\\\n", "\\n"))
+  local fl        = string.len('"" ..' .. self.indent_step)
+  local wl        = self.wrap - fl
+  local multiline = string.ulen(str) > wl
+  local rendered  = ''
+  --- format "%q" prints '\n' in an umpractical way IMO,
+  --- so this is fixed with the :gsub( ) call.
+  if multiline then
+    -- local nl_esc = str:gsub("\n", [[\n]])
+    --- split the raw text
+    local split = string.lines(str)
+    --- add newline placeholders
+    for i, v in ipairs(split) do
+      if i ~= #split then
+        split[i] = v .. '\\n'
+      end
+    end
+    --- wrap
+    local ls = string.wrap_array(split, wl)
+    for i, v in ipairs(ls) do
+      rendered = rendered .. "\n" .. self.indent_step
+      rendered = rendered .. string.format("%q", v):gsub("\\\\", [[\]])
+      if i ~= #ls then
+        rendered = rendered .. ' ..'
+      end
+    end
+  else
+    rendered = string.format("%q", str):gsub("\\\n", [[\n]])
+  end
+  self:acc(rendered)
 end
 
 function M:Function(_, params, body, annots)
