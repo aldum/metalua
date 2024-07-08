@@ -745,20 +745,23 @@ function M:Table(node)
     self:acc("{ }")
   else
     self:acc("{")
-    if #node > 1 then
+    local newline =
+        #node > 1 or
+        (node[1].tag == "Pair" and node[1][2].tag == "Function")
+    if newline then
       self:nlindent()
     else
       self:acc(" ")
     end
     for i, elem in ipairs(node) do
       if elem.tag == "Pair" then
-        -- `Pair{ `String{ key }, value }
         if elem[1].tag == "String" and is_ident(elem[1][1]) then
+          -- `Pair{ `String{ key }, value }
           self:acc(elem[1][1])
           self:acc(" = ")
           self:node(elem[2])
-          -- `Pair{ key, value }
         else
+          -- `Pair{ key, value }
           self:acc("[")
           self:node(elem[1])
           self:acc("] = ")
@@ -772,7 +775,7 @@ function M:Table(node)
         self:nl()
       end
     end
-    if #node > 1 then
+    if newline then
       self:nldedent()
     else
       self:acc(" ")
