@@ -26,10 +26,10 @@ require("stringutils")
 -- Instantiate a new AST->source synthetizer
 function M.new()
   local self = {
-    _acc = {},             -- Accumulates pieces of source as strings
-    current_indent = 0,    -- Current level of line indentation
-    indent_step = "   ",   -- Indentation symbol, normally spaces or '\t'
-    comment_ids = {},      -- Comments index accumulator
+    _acc = {},           -- Accumulates pieces of source as strings
+    current_indent = 0,  -- Current level of line indentation
+    indent_step = "   ", -- Indentation symbol, normally spaces or '\t'
+    comment_ids = {},    -- Comments index accumulator
   }
   return setmetatable(self, M)
 end
@@ -224,13 +224,16 @@ function M:extract_comments(node)
       local clast          = { l = cla.line, c = cla.column }
       local off            = cla.offset - cfi.offset
       local d              = off - len
+      local n_l            = #(string.lines(comment_text))
+      local l_d            = cla.line - cfi.line
+      local newline        = (n_l ~= 0 and n_l == l_d)
       local li             = {
         first = cfirst,
         last = clast,
         text = comment_text,
-        multiline = (d == 5),
+        multiline = (d > 4),
         position = pos,
-        add_newline = false,
+        prepend_newline = newline
       }
       self.comment_ids[id] = true
       table.insert(comments, li)
@@ -265,7 +268,6 @@ function M:node(node)
   --- @param pos 'first'|'last'
   local function show_comments(pos)
     for _, co in pairs(comments) do
-      local ml = false
       if co.position == pos then
         if co.position == 'last' then self:nl(true) end
         local lines = string.lines(co.text)
@@ -273,6 +275,7 @@ function M:node(node)
         local le = co.last.l
         if co.multiline then
           self:acc('--[[')
+          if co.prepend_newline then self:nl(true) end
           for i, l in ipairs(lines) do
             self:acc(l)
             if i ~= #lines then self:nl(true) end
@@ -285,7 +288,6 @@ function M:node(node)
             self:acc(ct)
           else
             --- multiple comments
-            ml = true
             for i, l in ipairs(lines) do
               local ct = '--' .. l
               self:acc(ct)
@@ -293,21 +295,21 @@ function M:node(node)
             end
           end
         end
-        if co.position == 'first' and not ml then self:nl(true) end
+        if co.position == 'first' then self:nl(true) end
       end
     end
   end
 
   show_comments('first')
-  if not node.tag then  -- tagless block.
+  if not node.tag then -- tagless block.
     self:list(node, self.nl)
   else
     local f = M[node.tag]
-    if type(f) == "function" then     -- Delegate to tag method.
+    if type(f) == "function" then   -- Delegate to tag method.
       f(self, node, unpack(node))
-    elseif type(f) == "string" then   -- tag string.
+    elseif type(f) == "string" then -- tag string.
       self:acc(f)
-    else                              -- No appropriate method, fall back to splice dumping.
+    else                            -- No appropriate method, fall back to splice dumping.
       -- This cannot happen in a plain Lua AST.
       self:acc(" -{ ")
       self:acc(pp.tostring(node,
