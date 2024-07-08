@@ -111,6 +111,21 @@ function M:acc(x)
 end
 
 --------------------------------------------------------------------------------
+--- Check if a piece of source can fit within the width limit
+--- @param s string
+--------------------------------------------------------------------------------
+function M:fits(s)
+   if type(s) == 'string' then
+      local clen = self._line_len
+      local l = string.ulen(s)
+      local lines = string.lines(s)
+      local n_l = #lines
+      if n_l == 1 then return l + clen < self.wrap end
+      return true --- TODO
+   end
+end
+
+--------------------------------------------------------------------------------
 --- Accumulate an indented newline.
 --- Jumps an extra line if indentation is 0, so that
 --- toplevel definitions are separated by an extra empty line.
