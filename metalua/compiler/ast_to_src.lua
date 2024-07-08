@@ -211,6 +211,7 @@ local op_symbol = {
 --- @param node token
 --- @return table
 function M:extract_comments(node)
+  if not node.lineinfo then return {} end
   local lfi = node.lineinfo.first
   local lla = node.lineinfo.last
   local comments = {}
