@@ -1152,7 +1152,8 @@ end
 
 -- print(M.run(+{stat: local function add(a, b) local c = a + b; return add(a,c) end}))
 
-return function(x, ...)
+M.oneshot = function(x, ...)
   local a2s = M.new(...)
   return a2s:run(x)
 end
+return M

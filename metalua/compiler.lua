@@ -168,8 +168,14 @@ end
 --------------------------------------------------------------------------------
 function CONV:function_to_bytecode(...) return string.dump(...) end
 
+local ast2 = require 'metalua.compiler.ast_to_src'
+
+function CONV:a2s(...)
+	return ast2.new(...)
+end
+
 function CONV:ast_to_src(...)
-	return require 'metalua.compiler.ast_to_src' (...)
+	return ast2:oneshot(...)
 end
 
 local MT = { __index = CONV, __type = 'metalua.compiler' }
