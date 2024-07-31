@@ -467,9 +467,14 @@ local comments = {
       'multi-',
       'line',
       'comment]]',
-      '--', --- this is canonical now, no following `--` after `]]`
+      '--', --- the proper mlc closing is `--]]`
     }
   ),
+  prep({ 'a = 3 --cmt',
+  }, {
+    'a = 3',
+    '-- cmt',
+  }),
 }
 
 local wrapping = {
@@ -960,6 +965,8 @@ local wrapping = {
 }
 
 local functions = {
+  prep({ 'fun(1)' }),
+  prep({ 'fun(1)', 'fun(3)' }),
   prep({
     'love.draw = function()',
     '  draw()',
