@@ -1,4 +1,7 @@
-local utf8 = require("lua-utf8")
+local utf8 = utf8
+if not utf8 then
+  utf8 = require("lua-utf8")
+end
 
 --- @param s string
 --- @return string
