@@ -1128,6 +1128,8 @@ local canon = {
       '  ',
       'end'
     }),
+
+  prep('   x = 2', 'x = 2')
 }
 
 local full = {
@@ -1143,6 +1145,18 @@ local todo = {
   --   '  -- f',
   --   'end',
   -- }),
+  prep({
+    'direction = {',
+    '  up = function(n)',
+    '    head.y = head.y - n',
+    '  end',
+    '}'
+  }),
+  prep('f()'),
+  prep('o:asd()'),
+  prep('t = { a = 1 }'),
+  prep('t = { c = 2 }'),
+  prep('a = 1'),
 }
 return {
   { 'basics',    basics },
