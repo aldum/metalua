@@ -918,7 +918,7 @@ function M:Function(_, params, body, annots)
   self:list(body, self.nl)
   self:nldedent()
   self:acc("end")
-  self:nl('noextra')
+  -- self:nl('noextra')
 end
 
 function M:Table(node)

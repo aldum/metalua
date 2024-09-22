@@ -858,7 +858,7 @@ local wrapping = {
       '  )',
       '    ',
       '  end',
-      '  ',
+      -- '  ',
       '}',
     }
   ),
@@ -896,7 +896,7 @@ local wrapping = {
     '        )',
     '          ',
     '        end',
-    '        ',
+    -- '        ',
     '      }',
     '    }',
     '  }',
@@ -1052,7 +1052,7 @@ local self = {
     '  draw = function(value)',
     '    V:dibujar()',
     '  end',
-    '  ',
+    -- '  ',
     '}'
   }),
   prep({
@@ -1060,7 +1060,7 @@ local self = {
     '  draw = function(value)',
     '    V:dibujar()',
     '  end',
-    '  ',
+    -- '  ',
     '}'
   }),
   prep({
