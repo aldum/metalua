@@ -78,6 +78,7 @@ local position_idx = 1
 ---@field source string
 ---@field comments comment
 ---@field facing position
+---@field id integer?
 function M.new_position(line, column, offset, source)
    local id = position_idx
    position_idx = position_idx + 1
